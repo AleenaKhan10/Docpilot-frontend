@@ -1,143 +1,302 @@
-import { Upload, Search, Eye, Download, Share } from "lucide-react";
-import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
+import { ArrowUpRight, Loader2 } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import MainLayout from "../../components/layout/MainLayout";
-import Badge from "../../components/ui/Badge";
+import Pill from "../../components/ui/Pill";
+import Sparkline from "../../components/charts/Sparkline";
+import Donut from "../../components/charts/Donut";
+import StatTile from "../../components/dashboard/StatTile";
+import ActivityFeed from "../../components/dashboard/ActivityFeed";
+import QuickActions from "../../components/dashboard/QuickActions";
+import { useOrg } from "../../contexts/OrgContext";
+import { api, ApiError } from "../../lib/api";
+import type { BackendVideoSummary, VideoStatus } from "../../lib/video-types";
 
-type DocStatus = "Pending" | "Completed" | "Processing";
+// Minutes a human technical writer would have spent producing this doc,
+// per published video. Conservative — most SOP-style docs take longer.
+const ESTIMATED_MINUTES_SAVED_PER_DOC = 12;
 
-const Dashbaord = () => {
-  const recentDocuments: { name: string; date: string; status: DocStatus }[] = [
-    {
-      name: "Onboarding Flow Walkthrough",
-      date: "2025-12-09",
-      status: "Completed",
-    },
-    {
-      name: "Bug Reproduction Steps",
-      date: "2025-12-09",
-      status: "Processing",
-    },
-    { name: "Release Notes v2.1", date: "2025-12-08", status: "Pending" },
-  ];
+const OUTPUT_TYPE_LABEL: Record<string, string> = {
+  sop: "SOP",
+  training: "Training",
+  bug_report: "Bug report",
+  changelog: "Changelog",
+  audit: "Audit",
+  client_handover: "Handover",
+};
 
-  const processingItems: { name: string; progress: number }[] = [
-    { name: "API Integration Demo", progress: 35 },
-    { name: "QA Regression Suite", progress: 70 },
-  ];
+const statusPill = (status: VideoStatus) => {
+  switch (status) {
+    case "completed":
+      return <Pill variant="ok">Published</Pill>;
+    case "processing":
+      return <Pill variant="info">Processing</Pill>;
+    case "pending":
+      return <Pill variant="neutral">Queued</Pill>;
+    case "failed":
+      return <Pill variant="err">Failed</Pill>;
+  }
+};
 
-  const documents: { name: string; date: string; status: DocStatus }[] = [
-    { name: "Support Training Video", date: "2025-12-07", status: "Completed" },
-    { name: "Payments Setup Guide", date: "2025-12-06", status: "Pending" },
-    { name: "Mobile App Walkthrough", date: "2025-12-05", status: "Completed" },
-    { name: "Admin Portal Tutorial", date: "2025-12-04", status: "Processing" },
-  ];
+const fmtRelative = (iso: string) => {
+  const ms = Date.now() - new Date(iso).getTime();
+  const min = Math.round(ms / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.round(hr / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString();
+};
+
+/** Build N days of zero-padded counts ending today (today is last element). */
+const buildDailyCounts = (videos: BackendVideoSummary[], days: number) => {
+  const buckets = new Array(days).fill(0);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  for (const v of videos) {
+    const created = new Date(v.created_at).getTime();
+    const daysAgo = Math.floor((startOfToday - created) / 86_400_000);
+    if (daysAgo >= 0 && daysAgo < days) {
+      buckets[days - 1 - daysAgo] += 1;
+    }
+  }
+  return buckets;
+};
+
+const Dashboard = () => {
+  const { activeOrg } = useOrg();
+  const [videos, setVideos] = useState<BackendVideoSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!activeOrg) return;
+    setLoading(true);
+    setError("");
+    api<BackendVideoSummary[]>("/api/v1/videos/")
+      .then(setVideos)
+      .catch((err) =>
+        setError(err instanceof ApiError ? err.detail : "Failed to load videos.")
+      )
+      .finally(() => setLoading(false));
+  }, [activeOrg?.id]);
+
+  // ───── Derived stats ────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const completed = videos.filter((v) => v.status === "completed").length;
+    const processing = videos.filter(
+      (v) => v.status === "processing" || v.status === "pending"
+    ).length;
+    const failed = videos.filter((v) => v.status === "failed").length;
+
+    const now = Date.now();
+    const sevenDaysAgo = now - 7 * 86_400_000;
+    const fourteenDaysAgo = now - 14 * 86_400_000;
+
+    const lastWeek = videos.filter(
+      (v) => new Date(v.created_at).getTime() >= sevenDaysAgo
+    ).length;
+    const weekBefore = videos.filter((v) => {
+      const t = new Date(v.created_at).getTime();
+      return t >= fourteenDaysAgo && t < sevenDaysAgo;
+    }).length;
+    const weekDelta = lastWeek - weekBefore;
+
+    const minutesSaved = completed * ESTIMATED_MINUTES_SAVED_PER_DOC;
+    const hoursSaved = (minutesSaved / 60).toFixed(1);
+
+    return {
+      total: videos.length,
+      completed,
+      processing,
+      failed,
+      lastWeek,
+      weekDelta,
+      hoursSaved,
+    };
+  }, [videos]);
+
+  // ───── Daily activity for sparkline ────────────────────────────────
+  const dailyCounts = useMemo(() => buildDailyCounts(videos, 14), [videos]);
+
+  // ───── Output-type distribution ────────────────────────────────────
+  const outputBreakdown = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const v of videos) {
+      const t = v.output_type || "sop";
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([k, value]) => ({
+        label: OUTPUT_TYPE_LABEL[k] ?? k,
+        value,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [videos]);
+
+  const recent = videos.slice(0, 5);
 
   return (
-    <MainLayout>
-      <div className="p-4 md:p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white rounded-md shadow-md p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="font-semibold text-gray-900">Upload Video</div>
-              <Upload className="text-blue-700" size={18} />
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Quickly upload a screen recording to generate documentation.
-            </p>
-            <Button variant="fill" className="w-[200px]" btnText="Upload">
-              <Upload size={18} />
-            </Button>
-          </div>
-
-          <div className="bg-white rounded-md shadow-md p-4">
-            <div className="font-semibold text-gray-900 mb-3">
-              Recent Documents
-            </div>
-            <div className="space-y-2">
-              {recentDocuments.map((d) => (
-                <div key={d.name} className="flex items-center justify-between">
-                  <div className="text-sm text-gray-800">{d.name}</div>
-                  <Badge label={d.status} variant={d.status} size="sm" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* <div className="bg-white rounded-md shadow-md p-4">
-            <div className="font-semibold text-gray-900 mb-3">
-              Processing Status
-            </div>
-            <div className="space-y-3">
-              {processingItems.map((p) => (
-                <div key={p.name} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm text-gray-800">
-                    <span>{p.name}</span>
-                    <span>{p.progress}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-gray-200 rounded-full">
-                    <div
-                      className="h-2 bg-blue-500 rounded-full"
-                      style={{ width: `${p.progress}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div> */}
+    <MainLayout breadcrumbs={[{ label: activeOrg?.name ?? "Workspace" }, { label: "Dashboard" }]}>
+      <div className="px-6 py-6 max-w-[1400px]">
+        {/* Stats row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+          <StatTile
+            value={stats.total}
+            label="Documents"
+            footnote={stats.total === 0 ? "no activity yet" : "all-time"}
+            loading={loading}
+          />
+          <StatTile
+            value={stats.lastWeek}
+            label="Created last 7 days"
+            trendValue={stats.weekDelta}
+            trendLabel="vs prior 7 days"
+            loading={loading}
+          />
+          <StatTile
+            value={stats.processing}
+            label="In progress"
+            footnote={stats.processing === 0 ? "queue empty" : "active jobs"}
+            loading={loading}
+          />
+          <StatTile
+            value={`${stats.hoursSaved}h`}
+            label="Time saved (est.)"
+            footnote={`${ESTIMATED_MINUTES_SAVED_PER_DOC} min/doc baseline`}
+            loading={loading}
+          />
         </div>
 
-        <div className="bg-white rounded-md shadow-md p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="font-semibold text-gray-900">All Documents</div>
-            <div className="w-64 hidden md:block">
-              <Input
-                placeholder="Filter by name"
-                variant="filled"
-                inputSize="md"
-                leftIcon={<Search size={18} />}
-              />
-            </div>
+        {/* Quick actions */}
+        <div className="mb-6">
+          <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-t5 mb-2.5">
+            Quick actions
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-600">
-                  <th className="p-2">Document Name</th>
-                  <th className="p-2">Created Date</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-800">
-                {documents.map((doc) => (
-                  <tr key={doc.name} className="border-t border-gray-100">
-                    <td className="p-2">{doc.name}</td>
-                    <td className="p-2">{doc.date}</td>
-                    <td className="p-2">
-                      <Badge
-                        label={doc.status}
-                        variant={doc.status}
-                        size="sm"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye size={16} />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Download size={16} />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Share size={16} />
-                        </Button>
-                      </div>
-                    </td>
+          <QuickActions role={activeOrg?.role} />
+        </div>
+
+        {/* Charts row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-6">
+          <div className="lg:col-span-2 bg-s1 border border-l1 rounded-md p-4">
+            <div className="flex items-baseline justify-between mb-3">
+              <div>
+                <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-t5">
+                  Activity · last 14 days
+                </div>
+                <div className="font-mono text-[24px] font-medium text-white tracking-[-0.04em] leading-none mt-1.5">
+                  {dailyCounts.reduce((a, b) => a + b, 0)}
+                  <span className="text-t5 text-[12px] ml-2">docs created</span>
+                </div>
+              </div>
+              <NavLink
+                to="/documents"
+                className="text-[11px] text-t4 hover:text-t2 flex items-center gap-1"
+              >
+                Open all <ArrowUpRight size={11} />
+              </NavLink>
+            </div>
+            <Sparkline
+              data={dailyCounts}
+              height={140}
+              showLast
+              showTicks
+              tickLabels={["14d ago", "Today"]}
+            />
+          </div>
+
+          <div className="bg-s1 border border-l1 rounded-md p-4">
+            <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-t5 mb-3">
+              By output type
+            </div>
+            <Donut
+              data={outputBreakdown}
+              centerValue={stats.total}
+              centerLabel="Docs"
+              size={140}
+            />
+          </div>
+        </div>
+
+        {/* Recent + activity feed row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+          <div className="lg:col-span-2 bg-s1 border border-l1 rounded-md overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-l1 flex items-center justify-between">
+              <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-t5">
+                Recent documents
+              </div>
+              <NavLink to="/documents" className="text-[11px] text-t4 hover:text-t2 flex items-center gap-1">
+                View all <ArrowUpRight size={11} />
+              </NavLink>
+            </div>
+            {loading ? (
+              <div className="px-6 py-12 text-center">
+                <Loader2 size={16} className="mx-auto text-t4 animate-spin mb-2" />
+                <div className="text-[12px] text-t5">Loading…</div>
+              </div>
+            ) : error ? (
+              <div className="px-6 py-8 text-center font-mono text-[10px] text-err-fg">
+                {error}
+              </div>
+            ) : recent.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <div className="text-[13px] text-t2 font-medium mb-1">
+                  No documents yet
+                </div>
+                <div className="text-[12px] text-t5 mb-4 max-w-sm mx-auto">
+                  Upload a screen recording to generate your first structured document.{" "}
+                  <NavLink
+                    to="/documents/sample"
+                    className="text-t2 underline underline-offset-2 hover:text-white"
+                  >
+                    View the sample SOP
+                  </NavLink>
+                  .
+                </div>
+              </div>
+            ) : (
+              <table className="w-full text-[12px]">
+                <thead>
+                  <tr className="bg-s2">
+                    {["Name", "Type", "Status", "Created"].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-2 text-left font-mono text-[9px] uppercase tracking-wide text-t5 border-b border-l1"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recent.map((v) => (
+                    <tr
+                      key={v.id}
+                      className="border-b border-l1 last:border-0 hover:bg-s2 cursor-pointer"
+                      onClick={() => (window.location.href = `/documents/${v.id}`)}
+                    >
+                      <td className="px-4 py-2.5 text-t2 font-medium">{v.title}</td>
+                      <td className="px-4 py-2.5 text-t4">
+                        {OUTPUT_TYPE_LABEL[v.output_type || "sop"] ?? v.output_type}
+                      </td>
+                      <td className="px-4 py-2.5">{statusPill(v.status)}</td>
+                      <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
+                        {fmtRelative(v.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="bg-s1 border border-l1 rounded-md overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-l1 font-mono text-[9px] tracking-[0.1em] uppercase text-t5">
+              Activity
+            </div>
+            <ActivityFeed videos={videos} limit={8} />
           </div>
         </div>
       </div>
@@ -145,4 +304,4 @@ const Dashbaord = () => {
   );
 };
 
-export default Dashbaord;
+export default Dashboard;

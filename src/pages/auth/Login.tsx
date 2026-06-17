@@ -1,123 +1,95 @@
-import { Mail, Lock, LogIn, Video } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
-import { useSignIn } from "@clerk/clerk-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import AuthLayout from "../../components/auth/AuthLayout";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Login = () => {
-  // CLERK
-  const { isLoaded, signIn, setActive } = useSignIn();
   const navigate = useNavigate();
-
-  // STATED
+  const { signIn } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  // METHODS
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded) return;
-
+    setError("");
+    setSubmitting(true);
     try {
-      const result = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        navigate("/"); // redirect after login
-      } else {
-        console.log("Additional steps required:", result);
-      }
-    } catch (err: any) {
-      console.log(err);
-      const clerkError =
-        err?.errors?.[0]?.long_message || "Invalid email or password";
-      setError(clerkError);
+      await signIn(email, password);
+      navigate("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid email or password");
+    } finally {
+      setSubmitting(false);
     }
   };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-md p-6 sm:p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-10 w-10 rounded-md bg-blue-600/10 text-blue-700 flex items-center justify-center">
-            <Video size={22} />
-          </div>
-          <div className="font-semibold text-gray-900">
-            Video Documentation AI
-          </div>
+    <AuthLayout
+      title="Sign in to your workspace"
+      subtitle="Turn screen recordings into structured, professional documentation — automatically."
+      footer={
+        <>
+          By signing in you agree to the{" "}
+          <span className="text-t3">Terms</span> and{" "}
+          <span className="text-t3">Privacy Policy</span>.
+        </>
+      }
+    >
+      <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <Input
+          label="Email"
+          type="email"
+          placeholder="you@company.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          required
+        />
+        <Input
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          required
+        />
+
+        {error && (
+          <p className="font-mono text-[10px] text-err-fg">{error}</p>
+        )}
+
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full mt-2"
+          disabled={submitting}
+        >
+          {submitting ? "Signing in..." : "Sign in"}
+        </Button>
+
+        <div className="flex items-center gap-2.5 my-2">
+          <div className="flex-1 h-px bg-l1" />
+          <span className="font-mono text-[9px] text-l4 uppercase">or</span>
+          <div className="flex-1 h-px bg-l1" />
         </div>
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Welcome Back</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Login to access your AI-generated documentation dashboard
-          </p>
-        </div>
-
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <Input
-            label="Email"
-            type="email"
-            placeholder="Enter email address"
-            variant="filled"
-            inputSize="md"
-            leftIcon={<Mail size={18} />}
-            onChange={(e) => setEmail(e.target.value)}
-            error={error}
-          />
-
-          <Input
-            label="Password"
-            type="password"
-            placeholder="Enter password"
-            variant="filled"
-            inputSize="md"
-            leftIcon={<Lock size={18} />}
-            onChange={(e) => setPassword(e.target.value)}
-            error={error}
-          />
-
-          <div className="flex items-center justify-between">
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              Remember me
-            </label>
-            <Link
-              to="/forgot-password"
-              className="text-sm text-blue-700 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            size="md"
-            variant="fill"
-            btnText="Login"
+        <div className="text-[12px] text-t4 text-center">
+          New here?{" "}
+          <Link
+            to="/signup"
+            className="text-t2 hover:text-white underline underline-offset-2"
           >
-            <LogIn size={18} />
-          </Button>
-
-          <div className="text-sm text-center text-gray-700">
-            Don’t have an account?{" "}
-            <Link to="/register" className="text-blue-700 hover:underline">
-              Register
-            </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+            Start an organization
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 };
 

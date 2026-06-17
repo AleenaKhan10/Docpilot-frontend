@@ -1,51 +1,182 @@
 import { NavLink } from "react-router-dom";
-import { Video, Upload, FileText, Users, Settings } from "lucide-react";
+import {
+  ChevronsUpDown,
+  FileText,
+  LayoutGrid,
+  Sparkles,
+  Users,
+  Settings,
+} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useOrg } from "../../contexts/OrgContext";
+import { useAuth } from "../../contexts/AuthContext";
+import Logo from "./Logo";
 
-interface SidebarProps {
-  isOpen: boolean;
-}
+const linkClasses = ({ isActive }: { isActive: boolean }) =>
+  [
+    "flex items-center gap-2 px-2 py-1.5 rounded-sm text-[12px] leading-tight",
+    "transition-colors mb-[1px]",
+    isActive
+      ? "bg-s2 text-white font-medium"
+      : "text-t4 hover:bg-s1 hover:text-t2",
+  ].join(" ");
 
-const Sidebar = ({ isOpen }: SidebarProps) => {
-  const linkClasses = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all ${
-      isActive ? "bg-blue-50 text-blue-700" : "text-gray-800 hover:bg-gray-100"
-    }`;
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <div className="font-mono text-[9px] font-medium tracking-[0.1em] uppercase text-l4 px-2 pt-2.5 pb-1">
+    {children}
+  </div>
+);
+
+const getInitials = (full?: string | null, email?: string | null) => {
+  if (full && full.trim()) {
+    const parts = full.trim().split(/\s+/);
+    return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
+  }
+  if (email) return email[0].toUpperCase();
+  return "?";
+};
+
+const Sidebar = () => {
+  const { orgs, activeOrg, switchOrg } = useOrg();
+  const { user } = useAuth();
+
+  const [orgMenuOpen, setOrgMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOrgMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const role = activeOrg?.role;
+  // Admin section visible to org-level Owner + Admin (mirrors backend).
+  const isAdminOrAbove = role === "owner" || role === "admin";
+  // Upload allowed for everyone except plain Viewer.
+  const canUpload = role === "owner" || role === "admin" || role === "editor";
+
+  const fullName =
+    (user?.user_metadata as { full_name?: string } | undefined)?.full_name ??
+    null;
+  const initials = getInitials(fullName, user?.email);
+
+  const orgInitials = activeOrg?.name?.[0]?.toUpperCase() ?? "?";
 
   return (
-    <div
-      className={
-        "bg-white shadow-md border-r border-gray-100 transition-all duration-200 " +
-        (isOpen ? "w-64" : "w-64 hidden md:block")
-      }
-    >
-      <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-100">
-        <div className="h-10 w-10 rounded-md bg-blue-600/10 text-blue-700 flex items-center justify-center">
-          <Video size={22} />
+    <aside className="w-[220px] flex-shrink-0 bg-bg2 border-r border-l1 flex flex-col overflow-hidden">
+      {/* Logo */}
+      <div className="h-[52px] px-3.5 border-b border-l1 flex items-center gap-2.5 flex-shrink-0">
+        <div className="w-6 h-6 bg-white text-bg rounded-sm flex items-center justify-center">
+          <Logo size={14} />
         </div>
-        <div className="font-semibold text-gray-900">
-          Video Documentation AI
-        </div>
+        <span className="font-semibold text-[13px] tracking-tight text-white">
+          DocPilot
+        </span>
       </div>
 
-      <nav className="p-4 space-y-2">
-        <NavLink to="/" className={linkClasses} end>
-          <FileText size={18} /> Dashboard
-        </NavLink>
-        <NavLink to="/upload" className={linkClasses}>
-          <Upload size={18} /> Upload Video
-        </NavLink>
-        <NavLink to="/documents" className={linkClasses}>
-          <FileText size={18} /> My Documents
-        </NavLink>
-        <NavLink to="/teams" className={linkClasses}>
-          <Users size={18} />
-          Users
-        </NavLink>
-        <NavLink to="/settings" className={linkClasses}>
-          <Settings size={18} /> Settings
-        </NavLink>
-      </nav>
-    </div>
+      {/* Org switcher */}
+      <div className="relative mx-2 mt-2 mb-1" ref={menuRef}>
+        <button
+          onClick={() => setOrgMenuOpen((o) => !o)}
+          disabled={orgs.length === 0}
+          className="w-full px-2.5 py-1.5 bg-s1 border border-l1 rounded-sm flex items-center gap-2 hover:bg-s2 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <div className="w-[18px] h-[18px] bg-s3 border border-l2 rounded-[3px] flex items-center justify-center font-mono text-[9px] font-medium text-t3">
+            {orgInitials}
+          </div>
+          <span className="text-[11px] font-medium text-t2 flex-1 text-left truncate">
+            {activeOrg?.name ?? "No organization"}
+          </span>
+          <ChevronsUpDown size={10} className="text-t5" />
+        </button>
+
+        {orgMenuOpen && orgs.length > 0 && (
+          <div className="absolute left-0 right-0 top-full mt-1 bg-s1 border border-l2 rounded-md shadow-xl z-30 max-h-80 overflow-y-auto">
+            {orgs.map((o) => (
+              <button
+                key={o.id}
+                onClick={() => {
+                  switchOrg(o.id);
+                  setOrgMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-s2 cursor-pointer text-left"
+              >
+                <div className="w-[18px] h-[18px] bg-s3 border border-l2 rounded-[3px] flex items-center justify-center font-mono text-[9px] font-medium text-t3 flex-shrink-0">
+                  {o.name[0]?.toUpperCase() ?? "?"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] text-t2 truncate">{o.name}</div>
+                  <div className="font-mono text-[9px] text-t5 uppercase">
+                    {o.role}
+                  </div>
+                </div>
+                {o.id === activeOrg?.id && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
+                )}
+              </button>
+            ))}
+            <NavLink
+              to="/create-org"
+              onClick={() => setOrgMenuOpen(false)}
+              className="block px-2.5 py-1.5 text-[11px] text-t3 hover:bg-s2 border-t border-l1"
+            >
+              + New organization
+            </NavLink>
+          </div>
+        )}
+      </div>
+
+      {/* Nav */}
+      <div className="flex-1 overflow-y-auto px-1.5 pb-2">
+        <div>
+          <SectionLabel>Workspace</SectionLabel>
+          <NavLink to="/" className={linkClasses} end>
+            <LayoutGrid size={13} /> Dashboard
+          </NavLink>
+          <NavLink to="/documents" className={linkClasses}>
+            <FileText size={13} /> All Documents
+          </NavLink>
+          {canUpload && (
+            <NavLink to="/upload" className={linkClasses}>
+              <Sparkles size={13} /> Generate
+            </NavLink>
+          )}
+        </div>
+
+        {isAdminOrAbove && (
+          <div>
+            <SectionLabel>Administration</SectionLabel>
+            <NavLink to="/team" className={linkClasses}>
+              <Users size={13} /> Team
+            </NavLink>
+            <NavLink to="/settings" className={linkClasses}>
+              <Settings size={13} /> Settings
+            </NavLink>
+          </div>
+        )}
+      </div>
+
+      {/* User */}
+      <div className="border-t border-l1 px-1.5 py-2 flex-shrink-0">
+        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-sm hover:bg-s1 cursor-pointer">
+          <div className="w-[26px] h-[26px] rounded-full bg-s3 border border-l2 flex items-center justify-center font-mono text-[9px] font-medium text-t3 flex-shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[12px] font-medium text-t2 truncate">
+              {fullName || user?.email}
+            </div>
+            <div className="font-mono text-[9px] text-t5 uppercase">
+              {activeOrg?.role ?? "—"}
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
   );
 };
 

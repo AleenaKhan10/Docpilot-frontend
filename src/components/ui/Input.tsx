@@ -4,74 +4,64 @@ import clsx from "clsx";
 interface InputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
   label?: string;
+  hint?: string;
   error?: string;
-  leftIcon?: React.ReactNode; // Lucide icon
-  rightIcon?: React.ReactNode; // Lucide icon
-  variant?: "default" | "outline" | "filled";
-  inputSize?: "sm" | "md" | "lg"; // renamed from size
-  className?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  inputSize?: "sm" | "md";
 }
 
-const sizeClasses = {
-  sm: "h-9 px-3 text-sm",
-  md: "h-10 px-3 text-base",
-  lg: "h-12 px-4 text-lg",
-};
-
-const variantClasses = {
-  default:
-    "border border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200",
-  outline:
-    "border-2 border-gray-400 bg-white focus:border-blue-600 focus:ring-0",
-  filled:
-    "bg-gray-100 border border-gray-200 focus:border-blue-500 focus:bg-white",
+const sizes = {
+  sm: "h-8 px-2.5 text-[12px]",
+  md: "h-[38px] px-3 text-[13px]",
 };
 
 const Input: React.FC<InputProps> = ({
   label,
+  hint,
   error,
   leftIcon,
   rightIcon,
-  variant = "default",
   inputSize = "md",
   className,
   ...props
-}) => {
-  return (
-    <div className="flex flex-col gap-1 w-full">
-      {label && (
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+}) => (
+  <div className="flex flex-col gap-1.5 w-full">
+    {label && (
+      <label className="font-mono text-[9px] font-medium uppercase tracking-[0.08em] text-t5">
+        {label}
+      </label>
+    )}
+    <div className="relative">
+      {leftIcon && (
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-t5">
+          {leftIcon}
+        </span>
       )}
-
-      <div className="relative">
-        {leftIcon && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-            {leftIcon}
-          </span>
+      <input
+        className={clsx(
+          "w-full rounded-sm bg-s2 border border-l1 text-t1 outline-none transition placeholder:text-t5",
+          "focus:border-l3 focus:bg-s2",
+          error && "border-err-fg/40",
+          sizes[inputSize],
+          leftIcon && "pl-9",
+          rightIcon && "pr-9",
+          className
         )}
-
-        <input
-          className={clsx(
-            "rounded-md w-full outline-none transition-all duration-200 flex items-center",
-            variantClasses[variant],
-            sizeClasses[inputSize],
-            leftIcon && "pl-10",
-            rightIcon && "pr-10",
-            className
-          )}
-          {...props}
-        />
-
-        {rightIcon && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer">
-            {rightIcon}
-          </span>
-        )}
-      </div>
-
-      {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
+        {...props}
+      />
+      {rightIcon && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-t5">
+          {rightIcon}
+        </span>
+      )}
     </div>
-  );
-};
+    {error ? (
+      <p className="font-mono text-[10px] text-err-fg">{error}</p>
+    ) : hint ? (
+      <p className="font-mono text-[10px] text-t5">{hint}</p>
+    ) : null}
+  </div>
+);
 
 export default Input;

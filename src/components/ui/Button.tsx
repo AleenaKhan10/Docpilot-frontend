@@ -2,30 +2,28 @@ import React from "react";
 import clsx from "clsx";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  btnText?: string;
-  variant?: "fill" | "outline" | "ghost";
-  size?: "sm" | "md" | "lg" | "xl";
-  className?: string;
+  variant?: "primary" | "ghost" | "danger" | "subtle";
+  size?: "sm" | "md";
+  icon?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-const buttonVariants = {
-  fill: "bg-blue-600 text-white hover:bg-blue-700",
-  outline: "border border-blue-600 text-blue-600 hover:bg-blue-50",
-  ghost: "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+const variants = {
+  primary: "bg-white text-ink hover:opacity-90",
+  ghost: "bg-transparent border border-l2 text-t3 hover:bg-s1 hover:border-l3 hover:text-t2",
+  subtle: "bg-s2 text-t2 hover:bg-s3",
+  danger: "bg-transparent border border-[#3B1212] text-err-fg hover:bg-[#180808]",
 };
 
-const buttonSizes = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-4 py-2 text-base",
-  lg: "px-5 py-2.5 text-lg",
-  xl: "px-6 py-3 text-xl",
+const sizes = {
+  sm: "h-[26px] px-2.5 text-[11px]",
+  md: "h-8 px-3.5 text-[12px]",
 };
 
 const Button: React.FC<ButtonProps> = ({
-  btnText,
-  variant = "fill",
+  variant = "ghost",
   size = "md",
+  icon,
   className,
   children,
   ...props
@@ -33,15 +31,15 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={clsx(
-        "rounded-md font-medium transition-all duration-200 flex items-center gap-2 cursor-pointer",
-        buttonVariants[variant],
-        buttonSizes[size],
+        "inline-flex items-center justify-center gap-1.5 rounded-sm font-medium tracking-tight transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap",
+        variants[variant],
+        sizes[size],
         className
       )}
       {...props}
     >
+      {icon}
       {children}
-      {btnText}
     </button>
   );
 };

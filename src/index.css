@@ -1,1 +1,140 @@
 @import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — Obsidian Dark (matches docpilot-obsidian.html)
+   Hierarchy: bg → s1..s4 (surfaces) → l1..l4 (lines) → t5..t1 (text)
+   ──────────────────────────────────────────────────────────────── */
+@theme {
+  --color-bg:        #09090B;
+  --color-bg2:       #0C0C0E;
+  --color-s1:        #111113;
+  --color-s2:        #161618;
+  --color-s3:        #1C1C1F;
+  --color-s4:        #222226;
+
+  --color-l1:        #1E1E22;
+  --color-l2:        #28282D;
+  --color-l3:        #34343A;
+  --color-l4:        #48484F;
+
+  --color-t5:        #52525C;
+  --color-t4:        #71717A;
+  --color-t3:        #A1A1AA;
+  --color-t2:        #D4D4D8;
+  --color-t1:        #F4F4F5;
+  --color-white:     #FAFAFA;
+
+  /* Ink — explicit dark color for use as text-on-light (buttons, etc.).
+     Aliased to bg, but with an unambiguous name so `text-ink` reads correctly. */
+  --color-ink:       #09090B;
+
+  /* Semantic status colors */
+  --color-ok-bg:     #0A1F0A;
+  --color-ok-fg:     #6EE57E;
+  --color-ok-line:   #163016;
+
+  --color-warn-bg:   #1F180A;
+  --color-warn-fg:   #FBB040;
+  --color-warn-line: #302010;
+
+  --color-err-bg:    #1F0A0A;
+  --color-err-fg:    #F87171;
+  --color-err-line:  #301616;
+
+  --color-info-bg:   #0A1820;
+  --color-info-fg:   #67C6F7;
+  --color-info-line: #102030;
+
+  --color-purple-bg: #1A0A20;
+  --color-purple-fg: #C084FC;
+  --color-purple-line: #2A1030;
+
+  --color-yellow-bg: #1C1A08;
+  --color-yellow-fg: #EAE060;
+  --color-yellow-line: #2E2A10;
+
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+/* Wrap our custom rules in @layer base so Tailwind utilities can
+   override them. Without this, unlayered rules WIN against utilities. */
+@layer base {
+  html, body, #root {
+    height: 100%;
+    background: var(--color-bg);
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-l3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-l4); }
+
+  ::selection { background: var(--color-l3); color: var(--color-white); }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* TipTap editor content styles — keep the editor on-theme. */
+  .tiptap-content p {
+    margin: 0 0 0.6em;
+  }
+  .tiptap-content p:last-child { margin-bottom: 0; }
+  .tiptap-content strong { color: var(--color-t1); font-weight: 600; }
+  .tiptap-content em { font-style: italic; }
+  .tiptap-content u { text-decoration: underline; }
+  .tiptap-content a {
+    color: var(--color-info-fg);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .tiptap-content h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-white);
+    letter-spacing: -0.02em;
+    margin: 0.5em 0 0.4em;
+  }
+  .tiptap-content h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-t1);
+    margin: 0.5em 0 0.3em;
+  }
+  .tiptap-content ul, .tiptap-content ol {
+    padding-left: 1.2em;
+    margin: 0.4em 0;
+  }
+  .tiptap-content ul li {
+    list-style: disc;
+    margin: 0.15em 0;
+  }
+  .tiptap-content ol li {
+    list-style: decimal;
+    margin: 0.15em 0;
+  }
+  .tiptap-content code {
+    font-family: var(--font-mono);
+    background: var(--color-s3);
+    border: 1px solid var(--color-l2);
+    border-radius: 2px;
+    padding: 1px 4px;
+    font-size: 0.9em;
+  }
+  .tiptap-content p.is-editor-empty:first-child::before {
+    color: var(--color-t5);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+}

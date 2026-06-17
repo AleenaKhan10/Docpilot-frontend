@@ -1,33 +1,25 @@
-import React from "react";
-import clsx from "clsx";
+// Compat shim — re-export Pill as Badge to keep older imports working
+// during the visual rebuild.
+import Pill, { type PillVariant } from "./Pill";
 
-type BadgeVariant = "Pending" | "Completed" | "Processing" | "Default";
+const STATUS_TO_VARIANT: Record<string, PillVariant> = {
+  Completed: "ok",
+  Processing: "info",
+  Pending: "neutral",
+  Default: "neutral",
+};
 
-interface BadgeProps {
+const Badge = ({
+  label,
+  variant,
+}: {
   label: string;
-  variant?: BadgeVariant;
+  variant?: string;
   size?: "sm" | "md";
-  className?: string;
-}
-
-const variantClasses: Record<BadgeVariant, string> = {
-  Completed: "bg-green-100 text-green-700 border border-green-200",
-  Processing: "bg-blue-100 text-blue-700 border border-blue-200",
-  Pending: "bg-yellow-100 text-yellow-700 border border-yellow-200",
-  Default: "bg-gray-100 text-gray-700 border border-gray-200",
-};
-
-const sizeClasses = {
-  sm: "text-xs px-2 py-1",
-  md: "text-sm px-3 py-1.5",
-};
-
-const Badge: React.FC<BadgeProps> = ({ label, variant = "Default", size = "sm", className }) => {
-  return (
-    <span className={clsx("rounded-md inline-flex items-center", variantClasses[variant], sizeClasses[size], className)}>
-      {label}
-    </span>
-  );
-};
+}) => (
+  <Pill variant={STATUS_TO_VARIANT[variant ?? "Default"] ?? "neutral"}>
+    {label}
+  </Pill>
+);
 
 export default Badge;

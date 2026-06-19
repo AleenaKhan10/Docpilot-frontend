@@ -56,8 +56,17 @@ const buildDailyCounts = (videos: BackendVideoSummary[], days: number) => {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   for (const v of videos) {
-    const created = new Date(v.created_at).getTime();
-    const daysAgo = Math.floor((startOfToday - created) / 86_400_000);
+    // Normalise the video's created_at to the *start* of its day too;
+    // otherwise a doc created 44m ago today gives a slightly-negative
+    // diff (today midnight - today 12:16am = -44m) and Math.floor sends
+    // it to -1, dropping today's docs from the chart.
+    const c = new Date(v.created_at);
+    const createdStartOfDay = new Date(
+      c.getFullYear(),
+      c.getMonth(),
+      c.getDate()
+    ).getTime();
+    const daysAgo = Math.round((startOfToday - createdStartOfDay) / 86_400_000);
     if (daysAgo >= 0 && daysAgo < days) {
       buckets[days - 1 - daysAgo] += 1;
     }

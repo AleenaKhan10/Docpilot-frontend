@@ -26,6 +26,8 @@ export interface BackendVideoSummary {
   pdf_url: string | null;
   created_at: string;
   updated_at?: string | null;
+  /** Display name of the uploader (full_name with email fallback). */
+  created_by?: string | null;
   /** The viewer's effective access on this doc, populated by the API. */
   your_access?: VideoAccessLevel | null;
   // steps may or may not be included on the list endpoint; assume empty if missing

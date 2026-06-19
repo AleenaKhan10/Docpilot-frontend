@@ -271,7 +271,7 @@ const Dashboard = () => {
               <table className="w-full text-[12px]">
                 <thead>
                   <tr className="bg-s2">
-                    {["Name", "Type", "Status", "Created"].map((h) => (
+                    {["Name", "Type", "Status", "Created", "Created by", "Updated"].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-2 text-left font-mono text-[9px] uppercase tracking-wide text-t5 border-b border-l1"
@@ -295,6 +295,12 @@ const Dashboard = () => {
                       <td className="px-4 py-2.5">{statusPill(v.status)}</td>
                       <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
                         {fmtRelative(v.created_at)}
+                      </td>
+                      <td className="px-4 py-2.5 text-t3">
+                        {v.created_by ?? <span className="text-t5">—</span>}
+                      </td>
+                      <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
+                        {v.updated_at ? fmtRelative(v.updated_at) : "—"}
                       </td>
                     </tr>
                   ))}

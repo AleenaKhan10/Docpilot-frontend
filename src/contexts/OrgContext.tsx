@@ -29,8 +29,14 @@ export const OrgProvider = ({ children }: { children: ReactNode }) => {
   );
   const [loading, setLoading] = useState(true);
 
+  // Depend on the stable user id, not the session reference. Supabase rebuilds
+  // the session object on every TOKEN_REFRESHED (which fires on tab focus),
+  // and re-fetching orgs every time the tab regains focus is what makes the
+  // UI flash blank.
+  const userId = session?.user?.id ?? null;
+
   const refresh = useCallback(async () => {
-    if (!session) {
+    if (!userId) {
       setOrgs([]);
       setLoading(false);
       return;
@@ -53,7 +59,7 @@ export const OrgProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [userId]);
 
   useEffect(() => {
     refresh();

@@ -13,7 +13,12 @@ const ProtectedRoute = () => {
   const { orgs, loading: orgLoading } = useOrg();
   const location = useLocation();
 
-  if (authLoading || (session && orgLoading)) return null;
+  // Only blank-out on the *initial* load, not on background refreshes.
+  // Once orgs are populated, keep rendering the previous UI even if a
+  // refetch is in flight — otherwise the whole app flashes blank every
+  // time Supabase silently refreshes the auth token.
+  const initialOrgLoad = orgLoading && orgs.length === 0;
+  if (authLoading || (session && initialOrgLoad)) return null;
 
   if (!session) return <Navigate to="/login" replace state={{ from: location }} />;
 

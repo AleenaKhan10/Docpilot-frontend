@@ -83,9 +83,17 @@ const Dashboard = () => {
       .finally(() => setLoading(false));
   }, [activeOrg?.id]);
 
+  // Only successfully-generated docs count as "docs". Queued, processing
+  // and failed videos still show in the recent list (so the user can see
+  // what's in flight) but they don't inflate the headline numbers.
+  const completedVideos = useMemo(
+    () => videos.filter((v) => v.status === "completed"),
+    [videos]
+  );
+
   // ───── Derived stats ────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const completed = videos.filter((v) => v.status === "completed").length;
+    const completed = completedVideos.length;
     const processing = videos.filter(
       (v) => v.status === "processing" || v.status === "pending"
     ).length;
@@ -95,10 +103,10 @@ const Dashboard = () => {
     const sevenDaysAgo = now - 7 * 86_400_000;
     const fourteenDaysAgo = now - 14 * 86_400_000;
 
-    const lastWeek = videos.filter(
+    const lastWeek = completedVideos.filter(
       (v) => new Date(v.created_at).getTime() >= sevenDaysAgo
     ).length;
-    const weekBefore = videos.filter((v) => {
+    const weekBefore = completedVideos.filter((v) => {
       const t = new Date(v.created_at).getTime();
       return t >= fourteenDaysAgo && t < sevenDaysAgo;
     }).length;
@@ -108,7 +116,7 @@ const Dashboard = () => {
     const hoursSaved = (minutesSaved / 60).toFixed(1);
 
     return {
-      total: videos.length,
+      total: completed,
       completed,
       processing,
       failed,
@@ -116,15 +124,18 @@ const Dashboard = () => {
       weekDelta,
       hoursSaved,
     };
-  }, [videos]);
+  }, [videos, completedVideos]);
 
   // ───── Daily activity for sparkline ────────────────────────────────
-  const dailyCounts = useMemo(() => buildDailyCounts(videos, 14), [videos]);
+  const dailyCounts = useMemo(
+    () => buildDailyCounts(completedVideos, 14),
+    [completedVideos]
+  );
 
   // ───── Output-type distribution ────────────────────────────────────
   const outputBreakdown = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const v of videos) {
+    for (const v of completedVideos) {
       const t = v.output_type || "sop";
       counts[t] = (counts[t] ?? 0) + 1;
     }
@@ -134,7 +145,7 @@ const Dashboard = () => {
         value,
       }))
       .sort((a, b) => b.value - a.value);
-  }, [videos]);
+  }, [completedVideos]);
 
   const recent = videos.slice(0, 5);
 

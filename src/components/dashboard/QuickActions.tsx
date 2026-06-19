@@ -7,8 +7,11 @@ interface QuickActionsProps {
 }
 
 const QuickActions = ({ role }: QuickActionsProps) => {
-  const canUpload = role === "owner" || role === "editor";
+  // Guest is the only role that cannot upload.
+  const canUpload =
+    role === "owner" || role === "admin" || role === "member";
   const isOwner = role === "owner";
+  const isAdminOrAbove = role === "owner" || role === "admin";
 
   const actions = [
     {
@@ -30,8 +33,8 @@ const QuickActions = ({ role }: QuickActionsProps) => {
       to: "/team",
       icon: <Users size={14} />,
       title: "Invite a teammate",
-      desc: "Add an editor or viewer to your workspace.",
-      visible: isOwner,
+      desc: "Add a member or guest to your workspace.",
+      visible: isAdminOrAbove,
     },
     {
       to: "/settings",

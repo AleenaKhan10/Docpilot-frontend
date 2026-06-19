@@ -56,8 +56,8 @@ const Sidebar = () => {
   const role = activeOrg?.role;
   // Admin section visible to org-level Owner + Admin (mirrors backend).
   const isAdminOrAbove = role === "owner" || role === "admin";
-  // Upload allowed for everyone except plain Viewer.
-  const canUpload = role === "owner" || role === "admin" || role === "editor";
+  // Upload allowed for everyone except Guest.
+  const canUpload = role === "owner" || role === "admin" || role === "member";
 
   const fullName =
     (user?.user_metadata as { full_name?: string } | undefined)?.full_name ??

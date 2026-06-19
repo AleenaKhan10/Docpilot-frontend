@@ -11,8 +11,8 @@ import type { Invitation, Member, Role } from "../../lib/types";
 
 // Higher number = more powerful role. Mirrors backend api.debs.role_rank.
 const ROLE_RANK: Record<Role, number> = {
-  viewer: 0,
-  editor: 1,
+  guest: 0,
+  member: 1,
   admin: 2,
   owner: 3,
 };
@@ -20,15 +20,15 @@ const ROLE_RANK: Record<Role, number> = {
 const ROLE_VARIANT: Record<Role, PillVariant> = {
   owner: "yellow",
   admin: "purple",
-  editor: "info",
-  viewer: "neutral",
+  member: "info",
+  guest: "neutral",
 };
 
 const ROLE_LABEL: Record<Role, string> = {
   owner: "Owner",
   admin: "Admin",
-  editor: "Editor",
-  viewer: "Viewer",
+  member: "Member",
+  guest: "Guest",
 };
 
 const Team = () => {
@@ -39,7 +39,7 @@ const Team = () => {
   const [loadError, setLoadError] = useState("");
 
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("viewer");
+  const [inviteRole, setInviteRole] = useState<Role>("guest");
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState("");
@@ -49,10 +49,10 @@ const Team = () => {
   const isAdminOrAbove = myRole === "owner" || myRole === "admin";
   const myRank = myRole ? ROLE_RANK[myRole] : -1;
 
-  // Owner can invite any non-owner role; admin can invite editor/viewer only.
+  // Owner can invite any non-owner role; admin can invite member/guest only.
   const invitableRoles: Role[] = isOwner
-    ? ["admin", "editor", "viewer"]
-    : ["editor", "viewer"];
+    ? ["admin", "member", "guest"]
+    : ["member", "guest"];
 
   const load = async () => {
     setLoading(true);
@@ -240,8 +240,8 @@ const Team = () => {
                   const manageable = canManage(m);
                   // What roles can the caller set this member to?
                   const targetRoles: Role[] = isOwner
-                    ? ["owner", "admin", "editor", "viewer"]
-                    : ["editor", "viewer"]; // admin can only set below admin
+                    ? ["owner", "admin", "member", "guest"]
+                    : ["member", "guest"]; // admin can only set strictly below admin
                   return (
                     <tr key={m.user_id} className="border-b border-l1 last:border-0">
                       <td className="px-4 py-2.5 text-t2 font-medium">

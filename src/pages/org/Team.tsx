@@ -225,7 +225,7 @@ const Team = () => {
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="bg-s2">
-                  {["Name", "Email", "Role", "Joined", ""].map((h, i) => (
+                  {["Name", "Email", "Role", "Status", "Joined", ""].map((h, i) => (
                     <th
                       key={i}
                       className="px-4 py-2 text-left font-mono text-[9px] uppercase tracking-wide text-t5 border-b border-l1"
@@ -269,6 +269,9 @@ const Team = () => {
                           <Pill variant={ROLE_VARIANT[m.role]}>{ROLE_LABEL[m.role]}</Pill>
                         )}
                       </td>
+                      <td className="px-4 py-2.5">
+                        <Pill variant="ok">Active</Pill>
+                      </td>
                       <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
                         {new Date(m.joined_at).toLocaleDateString()}
                       </td>
@@ -293,13 +296,18 @@ const Team = () => {
 
         {isAdminOrAbove && invites.length > 0 && (
           <div className="bg-s1 border border-l1 rounded-md overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-l1 font-mono text-[9px] uppercase tracking-[0.1em] text-t5">
-              Pending invitations ({invites.length})
+            <div className="px-4 py-2.5 border-b border-l1 flex items-center gap-2">
+              <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-t5">
+                Pending invitations ({invites.length})
+              </span>
+              <span className="font-mono text-[10px] text-t4">
+                — these people haven't accepted yet
+              </span>
             </div>
             <table className="w-full text-[12px]">
               <thead>
                 <tr className="bg-s2">
-                  {["Email", "Role", "Sent", ""].map((h, i) => (
+                  {["Email", "Role", "Status", "Sent", ""].map((h, i) => (
                     <th
                       key={i}
                       className="px-4 py-2 text-left font-mono text-[9px] uppercase tracking-wide text-t5 border-b border-l1"
@@ -315,6 +323,9 @@ const Team = () => {
                     <td className="px-4 py-2.5 font-mono text-[11px] text-t4">{i.email}</td>
                     <td className="px-4 py-2.5">
                       <Pill variant={ROLE_VARIANT[i.role]}>{ROLE_LABEL[i.role]}</Pill>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Pill variant="yellow">Pending</Pill>
                     </td>
                     <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
                       {new Date(i.created_at).toLocaleDateString()}

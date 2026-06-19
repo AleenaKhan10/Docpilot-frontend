@@ -7,6 +7,7 @@ import AuthLayout from "../../components/auth/AuthLayout";
 import { api, ApiError, setActiveOrgId } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { useOrg } from "../../contexts/OrgContext";
+import { supabase } from "../../lib/supabase";
 import type { InvitePeek, OrgWithRole } from "../../lib/types";
 
 const AcceptInvite = () => {
@@ -61,8 +62,21 @@ const AcceptInvite = () => {
     setError("");
     setSubmitting(true);
     try {
-      await signUp(peek.email, password, { full_name: fullName });
-      await signIn(peek.email, password);
+      if (session) {
+        // Came in via Supabase's invite link — there's already a session
+        // for an unpassworded auth.users row. We just need to set the
+        // password + display name, then accept on the backend.
+        const { error: updateErr } = await supabase.auth.updateUser({
+          password,
+          data: { full_name: fullName },
+        });
+        if (updateErr) throw updateErr;
+      } else {
+        // Direct nav (user pasted the URL or the email link had no hash).
+        // Standard signUp + signIn so we own the auth lifecycle.
+        await signUp(peek.email, password, { full_name: fullName });
+        await signIn(peek.email, password);
+      }
       const org = await acceptOnBackend();
       setActiveOrgId(org.id);
       await refreshOrgs();

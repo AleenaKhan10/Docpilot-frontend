@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, FileVideo, Loader2, Upload, X } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MainLayout from "../../components/layout/MainLayout";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Pill from "../../components/ui/Pill";
 import { useOrg } from "../../contexts/OrgContext";
 import { ApiError, uploadFile } from "../../lib/api";
+import { queryKeys } from "../../lib/query-client";
 import type { DocOutputType } from "../../lib/doc-types";
 import type { BackendVideoSummary } from "../../lib/video-types";
 
@@ -29,6 +31,7 @@ type UploadStage = "idle" | "uploading" | "finalizing" | "done" | "failed";
 const UploadVideo = () => {
   const { activeOrg } = useOrg();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [outputType, setOutputType] = useState<DocOutputType>("sop");
 
@@ -93,7 +96,37 @@ const UploadVideo = () => {
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const handleSubmit = async () => {
+  // Wrap the XHR-based upload in a useMutation. The mutation owns the
+  // network call + success/error transitions; the local stage / progress
+  // state still drives the inline progress bar UI (the XHR upload-side
+  // progress event is the only signal that matters during the upload
+  // itself, and the mutation lifecycle doesn't expose it).
+  const uploadMutation = useMutation({
+    mutationFn: (fd: FormData) =>
+      uploadFile<BackendVideoSummary>("/api/v1/videos/", fd, (pct) => {
+        setProgress(pct);
+        if (pct >= 100) setStage("finalizing");
+      }),
+    onSuccess: (created) => {
+      // Bust the org's video list cache so when the user lands on
+      // Dashboard / All Documents (either via the auto-nav below or
+      // manually) the freshly-queued doc is already visible.
+      if (activeOrg) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.videos(activeOrg.id),
+        });
+      }
+      setStage("done");
+      // brief pause so the user sees the success state
+      setTimeout(() => navigate(`/documents/${created.id}`), 600);
+    },
+    onError: (err) => {
+      setStage("failed");
+      setError(err instanceof ApiError ? err.detail : "Upload failed. Try again.");
+    },
+  });
+
+  const handleSubmit = () => {
     if (!file || !title.trim()) return;
 
     setStage("uploading");
@@ -108,22 +141,7 @@ const UploadVideo = () => {
       fd.append("description", description.trim());
     }
 
-    try {
-      const created = await uploadFile<BackendVideoSummary>(
-        "/api/v1/videos/",
-        fd,
-        (pct) => {
-          setProgress(pct);
-          if (pct >= 100) setStage("finalizing");
-        }
-      );
-      setStage("done");
-      // brief pause so the user sees the success state
-      setTimeout(() => navigate(`/documents/${created.id}`), 600);
-    } catch (err) {
-      setStage("failed");
-      setError(err instanceof ApiError ? err.detail : "Upload failed. Try again.");
-    }
+    uploadMutation.mutate(fd);
   };
 
   const isBusy = stage === "uploading" || stage === "finalizing" || stage === "done";

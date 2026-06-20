@@ -13,8 +13,17 @@ import type { InvitePeek, OrgWithRole } from "../../lib/types";
 const AcceptInvite = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { session, signUp, signIn } = useAuth();
+  const { session, user, signUp, signIn } = useAuth();
   const { refresh: refreshOrgs } = useOrg();
+
+  // The recipient has "completed signup" when they've ever set a name on
+  // their account. Fresh Supabase invite users have empty user_metadata
+  // even though our backend's auto-provision has already created a
+  // public.users row for them — so we cannot trust peek.existing_user
+  // alone to pick the form.
+  const userMetaName = (user?.user_metadata as { full_name?: string } | undefined)?.full_name;
+  const hasCompletedSignup = Boolean(userMetaName && userMetaName.trim());
+  const needsSignup = Boolean(session) && !hasCompletedSignup;
 
   const [peek, setPeek] = useState<InvitePeek | null>(null);
   const [peekError, setPeekError] = useState("");
@@ -145,7 +154,7 @@ const AcceptInvite = () => {
         </div>
       )}
 
-      {!loading && peek && peek.existing_user && (
+      {!loading && peek && peek.existing_user && !needsSignup && (
         <div className="flex flex-col gap-4">
           <p className="text-[13px] text-t3 leading-relaxed">
             This email already has a DocPilot account.{" "}
@@ -171,7 +180,7 @@ const AcceptInvite = () => {
         </div>
       )}
 
-      {!loading && peek && !peek.existing_user && (
+      {!loading && peek && (!peek.existing_user || needsSignup) && (
         <form onSubmit={handleNewUser} className="flex flex-col gap-4">
           <Input
             label="Your full name"

@@ -68,21 +68,41 @@ const AcceptInvite = () => {
     setError("");
     setSubmitting(true);
     try {
-      if (session) {
-        // Came in via Supabase's invite link — there's already a session
-        // for an unpassworded auth.users row. We just need to set the
-        // password + display name, then accept on the backend.
+      const sessionEmail = session?.user?.email?.toLowerCase();
+      const sessionMatchesInvitee =
+        Boolean(sessionEmail) && sessionEmail === peek.email.toLowerCase();
+
+      let credentialsSet = false;
+
+      if (sessionMatchesInvitee) {
+        // Supabase invite link path: there's a session for an
+        // unpassworded auth.users row that belongs to this invitee.
+        // Set password + name in place.
         const { error: updateErr } = await supabase.auth.updateUser({
           password,
           data: { full_name: fullName },
         });
-        if (updateErr) throw updateErr;
-      } else {
-        // Direct nav (user pasted the URL or the email link had no hash).
-        // Standard signUp + signIn so we own the auth lifecycle.
+        if (!updateErr) {
+          credentialsSet = true;
+        } else {
+          // updateUser failed — typically because the JWT in this tab is
+          // for an auth.users row that has since been deleted (e.g. the
+          // invitee was previously removed from the team and our hard
+          // delete wiped them). Sign out and fall through to signUp.
+          await supabase.auth.signOut();
+        }
+      } else if (session) {
+        // A different account is signed in in this tab (e.g. the owner
+        // testing the invite). Sign them out so signUp doesn't clobber
+        // anything and we land on the invitee's account.
+        await supabase.auth.signOut();
+      }
+
+      if (!credentialsSet) {
         await signUp(peek.email, password, { full_name: fullName });
         await signIn(peek.email, password);
       }
+
       const org = await acceptOnBackend();
       setActiveOrgId(org.id);
       await refreshOrgs();

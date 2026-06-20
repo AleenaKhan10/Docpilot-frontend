@@ -8,8 +8,13 @@ import {
   Settings,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useOrg } from "../../contexts/OrgContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { api } from "../../lib/api";
+import { queryKeys } from "../../lib/query-client";
+import type { Member, Invitation } from "../../lib/types";
+import type { BackendVideoSummary } from "../../lib/video-types";
 import Logo from "./Logo";
 
 const linkClasses = ({ isActive }: { isActive: boolean }) =>
@@ -39,6 +44,32 @@ const getInitials = (full?: string | null, email?: string | null) => {
 const Sidebar = () => {
   const { orgs, activeOrg, switchOrg } = useOrg();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Hover-driven prefetch. When the user mouses over a nav item we kick
+  // off the fetch for that page's primary data, so by the time React
+  // mounts the destination page (~100-200 ms later) the cache is already
+  // warm. queryClient.prefetchQuery is a no-op if the data is fresh, so
+  // these handlers are safe to wire onto every nav item.
+  const orgId = activeOrg?.id;
+  const prefetchVideos = () => {
+    if (!orgId) return;
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.videos(orgId),
+      queryFn: () => api<BackendVideoSummary[]>("/api/v1/videos/"),
+    });
+  };
+  const prefetchTeam = () => {
+    if (!orgId) return;
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.members(orgId),
+      queryFn: () => api<Member[]>("/api/v1/orgs/members"),
+    });
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.invitations(orgId),
+      queryFn: () => api<Invitation[]>("/api/v1/invitations/"),
+    });
+  };
 
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -134,10 +165,10 @@ const Sidebar = () => {
       <div className="flex-1 overflow-y-auto px-1.5 pb-2">
         <div>
           <SectionLabel>Workspace</SectionLabel>
-          <NavLink to="/" className={linkClasses} end>
+          <NavLink to="/" className={linkClasses} end onMouseEnter={prefetchVideos}>
             <LayoutGrid size={13} /> Dashboard
           </NavLink>
-          <NavLink to="/documents" className={linkClasses}>
+          <NavLink to="/documents" className={linkClasses} onMouseEnter={prefetchVideos}>
             <FileText size={13} /> All Documents
           </NavLink>
           {canUpload && (
@@ -150,7 +181,7 @@ const Sidebar = () => {
         {isAdminOrAbove && (
           <div>
             <SectionLabel>Administration</SectionLabel>
-            <NavLink to="/team" className={linkClasses}>
+            <NavLink to="/team" className={linkClasses} onMouseEnter={prefetchTeam}>
               <Users size={13} /> Team
             </NavLink>
             <NavLink to="/settings" className={linkClasses}>

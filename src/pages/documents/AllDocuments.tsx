@@ -47,6 +47,10 @@ const AllDocuments = () => {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
 
+  // Guests can be invited to view docs but cannot create new ones.
+  const role = activeOrg?.role;
+  const canUpload = role === "owner" || role === "admin" || role === "member";
+
   useEffect(() => {
     if (!activeOrg) return;
     setLoading(true);
@@ -91,9 +95,11 @@ const AllDocuments = () => {
               {videos.length} {videos.length === 1 ? "document" : "documents"} in {activeOrg?.name ?? "this workspace"}.
             </p>
           </div>
-          <NavLink to="/upload">
-            <Button variant="primary" size="md">+ Generate</Button>
-          </NavLink>
+          {canUpload && (
+            <NavLink to="/upload">
+              <Button variant="primary" size="md">+ Generate</Button>
+            </NavLink>
+          )}
         </div>
 
         <div className="bg-s1 border border-l1 rounded-md overflow-hidden">
@@ -142,10 +148,12 @@ const AllDocuments = () => {
               </div>
               <div className="text-[12px] text-t5 mb-4 max-w-sm mx-auto">
                 {videos.length === 0
-                  ? "Generate your first document from a screen recording."
+                  ? canUpload
+                    ? "Generate your first document from a screen recording."
+                    : "Documents shared with you will appear here. Ask an owner or admin to share one."
                   : "Try a different filter or search query."}
               </div>
-              {videos.length === 0 && (
+              {videos.length === 0 && canUpload && (
                 <div className="flex items-center justify-center gap-3">
                   <NavLink to="/upload">
                     <Button variant="primary" size="sm">Generate document</Button>

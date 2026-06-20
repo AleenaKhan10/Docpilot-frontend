@@ -32,6 +32,16 @@ const UploadVideo = () => {
   const [searchParams] = useSearchParams();
   const [outputType, setOutputType] = useState<DocOutputType>("sop");
 
+  // Guests cannot create new documents — bounce them to the dashboard
+  // before they fill out the form. The backend also enforces this on
+  // POST /videos via RequireRole, but this saves a wasted upload.
+  useEffect(() => {
+    if (!activeOrg) return;
+    const role = activeOrg.role;
+    const canUpload = role === "owner" || role === "admin" || role === "member";
+    if (!canUpload) navigate("/", { replace: true });
+  }, [activeOrg, navigate]);
+
   // Allow ?type=sop|training|bug_report|... to pre-select an output type
   // (used by dashboard quick-action cards).
   useEffect(() => {

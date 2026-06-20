@@ -13,21 +13,18 @@ import type { InvitePeek, OrgWithRole } from "../../lib/types";
 const AcceptInvite = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { session, user, signUp, signIn } = useAuth();
+  const { session, signUp, signIn } = useAuth();
   const { refresh: refreshOrgs } = useOrg();
-
-  // The recipient has "completed signup" when they've ever set a name on
-  // their account. Fresh Supabase invite users have empty user_metadata
-  // even though our backend's auto-provision has already created a
-  // public.users row for them — so we cannot trust peek.existing_user
-  // alone to pick the form.
-  const userMetaName = (user?.user_metadata as { full_name?: string } | undefined)?.full_name;
-  const hasCompletedSignup = Boolean(userMetaName && userMetaName.trim());
-  const needsSignup = Boolean(session) && !hasCompletedSignup;
 
   const [peek, setPeek] = useState<InvitePeek | null>(null);
   const [peekError, setPeekError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Show the signup form whenever signup is incomplete — either the user is
+  // brand new, OR their public.users row exists but has no name (row was
+  // auto-provisioned by /orgs/mine before they typed anything). The backend
+  // is the source of truth here; old auth.users metadata can lie.
+  const needsSignup = Boolean(peek) && peek?.has_completed_signup !== true;
 
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");

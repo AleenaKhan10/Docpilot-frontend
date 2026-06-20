@@ -39,5 +39,13 @@ export interface InvitePeek {
   email: string;
   role: Role;
   organization_name: string;
+  /** True iff a public.users row exists for this email. */
   existing_user: boolean;
+  /**
+   * True iff that row carries a full_name. False when the row was
+   * auto-provisioned by require_user but the recipient never finished
+   * the accept-invite form — in which case we still want them to set
+   * a name + password.
+   */
+  has_completed_signup?: boolean;
 }

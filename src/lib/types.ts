@@ -1,4 +1,4 @@
-export type Role = "owner" | "admin" | "editor" | "viewer";
+export type Role = "owner" | "admin" | "member" | "guest";
 
 export interface OrgWithRole {
   id: string;

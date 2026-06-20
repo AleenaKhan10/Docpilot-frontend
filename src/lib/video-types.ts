@@ -28,6 +28,12 @@ export interface BackendVideoSummary {
   updated_at?: string | null;
   /** Display name of the uploader (full_name with email fallback). */
   created_by?: string | null;
+  /**
+   * True when the uploader has been removed from the org and `created_by`
+   * is read from a frozen snapshot. The UI surfaces this with a small
+   * "former" tag so readers know the author is no longer reachable here.
+   */
+  created_by_is_former?: boolean;
   /** The viewer's effective access on this doc, populated by the API. */
   your_access?: VideoAccessLevel | null;
   // steps may or may not be included on the list endpoint; assume empty if missing

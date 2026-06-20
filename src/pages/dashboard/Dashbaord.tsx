@@ -306,7 +306,18 @@ const Dashboard = () => {
                         {fmtRelative(v.created_at)}
                       </td>
                       <td className="px-4 py-2.5 text-t3">
-                        {v.created_by ?? <span className="text-t5">—</span>}
+                        {v.created_by ? (
+                          <>
+                            {v.created_by}
+                            {v.created_by_is_former && (
+                              <span className="ml-1.5 font-mono text-[9px] uppercase tracking-wide text-t5">
+                                former
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-t5">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
                         {v.updated_at ? fmtRelative(v.updated_at) : "—"}

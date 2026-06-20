@@ -2,6 +2,7 @@ import { Mail, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import Select from "../../components/ui/Select";
 import Pill, { type PillVariant } from "../../components/ui/Pill";
 import IconButton from "../../components/ui/IconButton";
 import MainLayout from "../../components/layout/MainLayout";
@@ -183,11 +184,8 @@ const Team = () => {
                 />
               </div>
               <div className="md:w-44">
-                <label className="font-mono text-[9px] font-medium uppercase tracking-[0.08em] text-t5 mb-1.5 block">
-                  Role
-                </label>
-                <select
-                  className="w-full h-[38px] px-3 rounded-sm bg-s2 border border-l1 text-t1 text-[13px] outline-none focus:border-l3"
+                <Select
+                  label="Role"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as Role)}
                 >
@@ -196,7 +194,7 @@ const Team = () => {
                       {ROLE_LABEL[r]}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <Button
                 type="submit"
@@ -254,19 +252,24 @@ const Team = () => {
                       </td>
                       <td className="px-4 py-2.5">
                         {manageable ? (
-                          <select
-                            value={m.role}
-                            onChange={(e) =>
-                              handleChangeRole(m.user_id, e.target.value as Role)
-                            }
-                            className="bg-s2 border border-l1 rounded-sm px-2 py-1 text-[11px] text-t1 outline-none focus:border-l3"
-                          >
-                            {targetRoles.map((r) => (
-                              <option key={r} value={r}>
-                                {ROLE_LABEL[r]}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="w-[120px]">
+                            <Select
+                              selectSize="sm"
+                              value={m.role}
+                              onChange={(e) =>
+                                handleChangeRole(
+                                  m.user_id,
+                                  e.target.value as Role
+                                )
+                              }
+                            >
+                              {targetRoles.map((r) => (
+                                <option key={r} value={r}>
+                                  {ROLE_LABEL[r]}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
                         ) : (
                           <Pill variant={ROLE_VARIANT[m.role]}>{ROLE_LABEL[m.role]}</Pill>
                         )}

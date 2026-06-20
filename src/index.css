@@ -137,4 +137,17 @@
     height: 0;
     pointer-events: none;
   }
+
+  /* Modal backdrop fade-in + content pop. Used by ShareDialog and any
+     other top-level modal that wants a softer entrance than instant. */
+  @keyframes dp-modal-fade-kf {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes dp-modal-pop-kf {
+    from { opacity: 0; transform: translateY(4px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .dp-modal-fade { animation: dp-modal-fade-kf 140ms ease-out; }
+  .dp-modal-fade > * { animation: dp-modal-pop-kf 160ms ease-out; }
 }

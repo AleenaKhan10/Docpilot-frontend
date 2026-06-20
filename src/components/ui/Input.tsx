@@ -13,7 +13,7 @@ interface InputProps
 
 const sizes = {
   sm: "h-8 px-2.5 text-[12px]",
-  md: "h-[38px] px-3 text-[13px]",
+  md: "h-9 px-3 text-[13px]",
 };
 
 const Input: React.FC<InputProps> = ({

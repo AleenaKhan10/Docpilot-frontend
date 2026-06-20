@@ -104,25 +104,32 @@ const ShareDialog = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-bg/70 backdrop-blur-sm flex items-center justify-center px-4"
+      className="fixed inset-0 z-50 bg-bg/75 backdrop-blur-sm flex items-center justify-center px-4 dp-modal-fade"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bg-s1 border border-l3 rounded-md shadow-2xl"
+        className="w-full max-w-lg bg-s1 border border-l2 rounded-lg shadow-2xl shadow-black/50"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-l1 px-5 py-3">
-          <div className="text-[13px] font-semibold text-t1">Share document</div>
+        <div className="flex items-center justify-between border-b border-l1 px-6 py-3.5">
+          <div>
+            <div className="text-[14px] font-semibold text-t1 tracking-tight">
+              Share document
+            </div>
+            <div className="text-[11px] text-t5 mt-0.5">
+              Invite teammates or create a public link.
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="w-6 h-6 rounded-xs text-t5 hover:bg-s2 hover:text-t2 flex items-center justify-center"
+            className="w-7 h-7 rounded-sm text-t5 hover:bg-s2 hover:text-t2 flex items-center justify-center transition-colors"
           >
-            <X size={13} />
+            <X size={14} />
           </button>
         </div>
 
         {/* Tab bar */}
-        <div className="flex border-b border-l1 px-2">
+        <div className="flex border-b border-l1 px-3">
           {[
             { id: "people" as const, label: "People", icon: <Users size={12} /> },
             { id: "link" as const, label: "Public link", icon: <Globe2 size={12} /> },
@@ -143,13 +150,13 @@ const ShareDialog = ({
         </div>
 
         {tab === "people" && (
-          <div className="px-5 py-4">
+          <div className="px-6 py-5">
             <AccessList videoId={videoId} canManage={canManageSharing} />
           </div>
         )}
 
         {tab === "link" && (
-        <div className="px-5 py-4 flex flex-col gap-4">
+        <div className="px-6 py-5 flex flex-col gap-4">
           {loading ? (
             <div className="text-[12px] text-t5">Loading…</div>
           ) : error ? (

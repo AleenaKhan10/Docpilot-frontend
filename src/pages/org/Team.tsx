@@ -89,7 +89,9 @@ const Team = () => {
         method: "POST",
         body: { email: inviteEmail.trim(), role: inviteRole },
       });
-      setInviteSuccess(`Invitation sent to ${inviteEmail}.`);
+      setInviteSuccess(
+        `Invitation sent to ${inviteEmail} as ${ROLE_LABEL[inviteRole]}.`
+      );
       setInviteEmail("");
       await load();
     } catch (err) {

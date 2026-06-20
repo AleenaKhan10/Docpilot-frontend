@@ -1,12 +1,14 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useOrg } from "../contexts/OrgContext";
+import RouteErrorBoundary from "../components/RouteErrorBoundary";
 
 /**
  * Gate for routes that require a Supabase session AND an active organization.
  * - Not signed in -> /login
  * - Signed in but no orgs -> /create-org
- * - Otherwise renders the child route.
+ * - Otherwise renders the child route, wrapped in a per-route error
+ *   boundary so one page's crash doesn't take down the whole app shell.
  */
 const ProtectedRoute = () => {
   const { session, loading: authLoading } = useAuth();
@@ -26,7 +28,11 @@ const ProtectedRoute = () => {
     return <Navigate to="/create-org" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <RouteErrorBoundary resetKey={location.pathname}>
+      <Outlet />
+    </RouteErrorBoundary>
+  );
 };
 
 export default ProtectedRoute;

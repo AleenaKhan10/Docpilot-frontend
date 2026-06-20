@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Filter, Loader2, Search } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import MainLayout from "../../components/layout/MainLayout";
 import Pill from "../../components/ui/Pill";
 import Button from "../../components/ui/Button";
 import { useOrg } from "../../contexts/OrgContext";
-import { api, ApiError } from "../../lib/api";
-import type { BackendVideoSummary, VideoStatus } from "../../lib/video-types";
+import { ApiError } from "../../lib/api";
+import { useVideos } from "../../hooks/useVideos";
+import type { VideoStatus } from "../../lib/video-types";
 
 type FilterKey = "all" | "published" | "processing" | "failed";
 
@@ -40,9 +41,16 @@ const fmtDate = (iso: string) =>
 const AllDocuments = () => {
   const { activeOrg } = useOrg();
   const navigate = useNavigate();
-  const [videos, setVideos] = useState<BackendVideoSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  // Shares the videos cache key with Dashboard — navigating between the
+  // two reads from cache and revalidates in the background.
+  const { videos, isInitialLoading, error: videosError } = useVideos();
+  const loading = isInitialLoading;
+  const error =
+    videosError instanceof ApiError
+      ? videosError.detail
+      : videosError
+      ? "Failed to load videos."
+      : "";
 
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
@@ -50,18 +58,6 @@ const AllDocuments = () => {
   // Guests can be invited to view docs but cannot create new ones.
   const role = activeOrg?.role;
   const canUpload = role === "owner" || role === "admin" || role === "member";
-
-  useEffect(() => {
-    if (!activeOrg) return;
-    setLoading(true);
-    setError("");
-    api<BackendVideoSummary[]>("/api/v1/videos/")
-      .then(setVideos)
-      .catch((err) =>
-        setError(err instanceof ApiError ? err.detail : "Failed to load videos.")
-      )
-      .finally(() => setLoading(false));
-  }, [activeOrg?.id]);
 
   const filtered = useMemo(() => {
     let out = videos;

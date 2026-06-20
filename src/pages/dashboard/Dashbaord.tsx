@@ -1,6 +1,6 @@
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import MainLayout from "../../components/layout/MainLayout";
 import Pill from "../../components/ui/Pill";
 import Sparkline from "../../components/charts/Sparkline";
@@ -9,7 +9,8 @@ import StatTile from "../../components/dashboard/StatTile";
 import ActivityFeed from "../../components/dashboard/ActivityFeed";
 import QuickActions from "../../components/dashboard/QuickActions";
 import { useOrg } from "../../contexts/OrgContext";
-import { api, ApiError } from "../../lib/api";
+import { ApiError } from "../../lib/api";
+import { useVideos } from "../../hooks/useVideos";
 import type { BackendVideoSummary, VideoStatus } from "../../lib/video-types";
 
 // Minutes a human technical writer would have spent producing this doc,
@@ -76,21 +77,16 @@ const buildDailyCounts = (videos: BackendVideoSummary[], days: number) => {
 
 const Dashboard = () => {
   const { activeOrg } = useOrg();
-  const [videos, setVideos] = useState<BackendVideoSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!activeOrg) return;
-    setLoading(true);
-    setError("");
-    api<BackendVideoSummary[]>("/api/v1/videos/")
-      .then(setVideos)
-      .catch((err) =>
-        setError(err instanceof ApiError ? err.detail : "Failed to load videos.")
-      )
-      .finally(() => setLoading(false));
-  }, [activeOrg?.id]);
+  const { videos, isInitialLoading, error: videosError } = useVideos();
+  // Only show the skeleton on the very first fetch — re-navigations
+  // from a cached list paint instantly while a background refetch runs.
+  const loading = isInitialLoading;
+  const error =
+    videosError instanceof ApiError
+      ? videosError.detail
+      : videosError
+      ? "Failed to load videos."
+      : "";
 
   // Only successfully-generated docs count as "docs". Queued, processing
   // and failed videos still show in the recent list (so the user can see

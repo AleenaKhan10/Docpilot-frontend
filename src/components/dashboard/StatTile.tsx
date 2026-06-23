@@ -38,10 +38,23 @@ const StatTile = ({
       ? "text-err-fg"
       : "text-t5";
 
+  if (loading) {
+    return (
+      <div
+        className="bg-s1 border border-l1 rounded-md p-4 flex flex-col"
+        aria-hidden
+      >
+        <div className="h-7 w-20 rounded-sm bg-s3/60 animate-pulse" />
+        <div className="h-3 w-24 rounded-sm bg-s3/40 mt-2 animate-pulse" />
+        <div className="h-3 w-16 rounded-sm bg-s3/30 mt-3 animate-pulse" />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-s1 border border-l1 rounded-md p-4 flex flex-col">
       <div className="font-mono text-[28px] font-medium text-white tracking-[-0.06em] leading-none">
-        {loading ? "—" : value}
+        {value}
       </div>
       <div className="text-[11px] text-t5 mt-1.5">{label}</div>
       <div className="flex items-center gap-1.5 mt-3">

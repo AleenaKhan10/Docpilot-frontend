@@ -1,8 +1,9 @@
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useMemo } from "react";
 import MainLayout from "../../components/layout/MainLayout";
 import Pill from "../../components/ui/Pill";
+import TableSkeleton from "../../components/ui/TableSkeleton";
 import Sparkline from "../../components/charts/Sparkline";
 import Donut from "../../components/charts/Donut";
 import StatTile from "../../components/dashboard/StatTile";
@@ -202,10 +203,16 @@ const Dashboard = () => {
                 <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-t5">
                   Activity · last 14 days
                 </div>
-                <div className="font-mono text-[24px] font-medium text-white tracking-[-0.04em] leading-none mt-1.5">
-                  {dailyCounts.reduce((a, b) => a + b, 0)}
-                  <span className="text-t5 text-[12px] ml-2">docs created</span>
-                </div>
+                {loading ? (
+                  <div className="h-6 w-32 rounded-sm bg-s3/60 animate-pulse mt-1.5" />
+                ) : (
+                  <div className="font-mono text-[24px] font-medium text-white tracking-[-0.04em] leading-none mt-1.5">
+                    {dailyCounts.reduce((a, b) => a + b, 0)}
+                    <span className="text-t5 text-[12px] ml-2">
+                      docs created
+                    </span>
+                  </div>
+                )}
               </div>
               <NavLink
                 to="/documents"
@@ -214,25 +221,35 @@ const Dashboard = () => {
                 Open all <ArrowUpRight size={11} />
               </NavLink>
             </div>
-            <Sparkline
-              data={dailyCounts}
-              height={140}
-              showLast
-              showTicks
-              tickLabels={["14d ago", "Today"]}
-            />
+            {loading ? (
+              <div className="h-[140px] rounded-sm bg-s3/30 animate-pulse" />
+            ) : (
+              <Sparkline
+                data={dailyCounts}
+                height={140}
+                showLast
+                showTicks
+                tickLabels={["14d ago", "Today"]}
+              />
+            )}
           </div>
 
           <div className="bg-s1 border border-l1 rounded-md p-4">
             <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-t5 mb-3">
               By output type
             </div>
-            <Donut
-              data={outputBreakdown}
-              centerValue={stats.total}
-              centerLabel="Docs"
-              size={140}
-            />
+            {loading ? (
+              <div className="flex items-center justify-center h-[140px]">
+                <div className="w-[140px] h-[140px] rounded-full bg-s3/30 animate-pulse" />
+              </div>
+            ) : (
+              <Donut
+                data={outputBreakdown}
+                centerValue={stats.total}
+                centerLabel="Docs"
+                size={140}
+              />
+            )}
           </div>
         </div>
 
@@ -248,10 +265,7 @@ const Dashboard = () => {
               </NavLink>
             </div>
             {loading ? (
-              <div className="px-6 py-12 text-center">
-                <Loader2 size={16} className="mx-auto text-t4 animate-spin mb-2" />
-                <div className="text-[12px] text-t5">Loading…</div>
-              </div>
+              <TableSkeleton rows={5} cols={6} />
             ) : error ? (
               <div className="px-6 py-8 text-center font-mono text-[10px] text-err-fg">
                 {error}

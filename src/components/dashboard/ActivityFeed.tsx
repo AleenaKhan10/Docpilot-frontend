@@ -1,5 +1,6 @@
 import { CheckCircle2, FileText, Loader2, XCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { usePrefetchVideo } from "../../hooks/useVideos";
 import type { BackendVideoSummary, VideoStatus } from "../../lib/video-types";
 
 interface ActivityFeedProps {
@@ -45,6 +46,7 @@ const statusVerb = (status: VideoStatus) => {
 };
 
 const ActivityFeed = ({ videos, limit = 8 }: ActivityFeedProps) => {
+  const prefetchVideo = usePrefetchVideo();
   // Sort by updated_at if available else created_at
   const sorted = [...videos]
     .sort((a, b) => {
@@ -69,6 +71,7 @@ const ActivityFeed = ({ videos, limit = 8 }: ActivityFeedProps) => {
         <NavLink
           key={v.id}
           to={`/documents/${v.id}`}
+          onMouseEnter={() => prefetchVideo(v.id)}
           className={[
             "flex items-start gap-3 px-4 py-2.5 hover:bg-s2 transition",
             i < sorted.length - 1 ? "border-b border-l1" : "",

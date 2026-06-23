@@ -1,5 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import MainLayout from "../../components/layout/MainLayout";
 import Pill from "../../components/ui/Pill";
@@ -11,7 +11,7 @@ import ActivityFeed from "../../components/dashboard/ActivityFeed";
 import QuickActions from "../../components/dashboard/QuickActions";
 import { useOrg } from "../../contexts/OrgContext";
 import { ApiError } from "../../lib/api";
-import { useVideos } from "../../hooks/useVideos";
+import { useVideos, usePrefetchVideo } from "../../hooks/useVideos";
 import type { BackendVideoSummary, VideoStatus } from "../../lib/video-types";
 
 // Minutes a human technical writer would have spent producing this doc,
@@ -78,6 +78,8 @@ const buildDailyCounts = (videos: BackendVideoSummary[], days: number) => {
 
 const Dashboard = () => {
   const { activeOrg } = useOrg();
+  const navigate = useNavigate();
+  const prefetchVideo = usePrefetchVideo();
   const { videos, isInitialLoading, error: videosError } = useVideos();
   // Only show the skeleton on the very first fetch — re-navigations
   // from a cached list paint instantly while a background refetch runs.
@@ -305,7 +307,8 @@ const Dashboard = () => {
                     <tr
                       key={v.id}
                       className="border-b border-l1 last:border-0 hover:bg-s2 cursor-pointer"
-                      onClick={() => (window.location.href = `/documents/${v.id}`)}
+                      onMouseEnter={() => prefetchVideo(v.id)}
+                      onClick={() => navigate(`/documents/${v.id}`)}
                     >
                       <td className="px-4 py-2.5 text-t2 font-medium">{v.title}</td>
                       <td className="px-4 py-2.5 text-t4">

@@ -6,7 +6,7 @@ import Pill from "../../components/ui/Pill";
 import Button from "../../components/ui/Button";
 import { useOrg } from "../../contexts/OrgContext";
 import { ApiError } from "../../lib/api";
-import { useVideos } from "../../hooks/useVideos";
+import { useVideos, usePrefetchVideo } from "../../hooks/useVideos";
 import type { VideoStatus } from "../../lib/video-types";
 
 type FilterKey = "all" | "published" | "processing" | "failed";
@@ -41,6 +41,7 @@ const fmtDate = (iso: string) =>
 const AllDocuments = () => {
   const { activeOrg } = useOrg();
   const navigate = useNavigate();
+  const prefetchVideo = usePrefetchVideo();
   // Shares the videos cache key with Dashboard — navigating between the
   // two reads from cache and revalidates in the background.
   const { videos, isInitialLoading, error: videosError } = useVideos();
@@ -182,6 +183,7 @@ const AllDocuments = () => {
                   <tr
                     key={v.id}
                     className="border-b border-l1 last:border-0 hover:bg-s2 cursor-pointer"
+                    onMouseEnter={() => prefetchVideo(v.id)}
                     onClick={() => navigate(`/documents/${v.id}`)}
                   >
                     <td className="px-4 py-2.5 text-t2 font-medium">{v.title}</td>

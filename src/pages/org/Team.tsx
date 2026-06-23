@@ -98,20 +98,55 @@ const Team = () => {
       setInviteError(err instanceof ApiError ? err.detail : "Failed to send invite."),
   });
 
+  // ── Optimistic mutations ────────────────────────────────────────────
+  // Each one snapshots the relevant cache, applies the change locally,
+  // and rolls back on failure. onSettled invalidates so the server's
+  // authoritative state replaces the optimistic guess once the round-
+  // trip lands. cancelQueries inside onMutate prevents an in-flight
+  // refetch from clobbering the optimistic data.
+
   const revokeMutation = useMutation({
     mutationFn: (id: string) =>
       api(`/api/v1/invitations/${id}`, { method: "DELETE" }),
-    onSuccess: invalidateTeam,
-    onError: (err) =>
-      alert(err instanceof ApiError ? err.detail : "Failed to revoke."),
+    onMutate: async (id) => {
+      if (!orgId) return { prev: undefined };
+      const key = queryKeys.invitations(orgId);
+      await queryClient.cancelQueries({ queryKey: key });
+      const prev = queryClient.getQueryData<Invitation[]>(key);
+      queryClient.setQueryData<Invitation[]>(key, (cur) =>
+        (cur ?? []).filter((i) => i.id !== id)
+      );
+      return { prev };
+    },
+    onError: (err, _id, ctx) => {
+      if (orgId && ctx?.prev) {
+        queryClient.setQueryData(queryKeys.invitations(orgId), ctx.prev);
+      }
+      alert(err instanceof ApiError ? err.detail : "Failed to revoke.");
+    },
+    onSettled: invalidateTeam,
   });
 
   const removeMutation = useMutation({
     mutationFn: (userId: string) =>
       api(`/api/v1/orgs/members/${userId}`, { method: "DELETE" }),
-    onSuccess: invalidateTeam,
-    onError: (err) =>
-      alert(err instanceof ApiError ? err.detail : "Failed to remove."),
+    onMutate: async (userId) => {
+      if (!orgId) return { prev: undefined };
+      const key = queryKeys.members(orgId);
+      await queryClient.cancelQueries({ queryKey: key });
+      const prev = queryClient.getQueryData<Member[]>(key);
+      queryClient.setQueryData<Member[]>(key, (cur) =>
+        (cur ?? []).filter((m) => m.user_id !== userId)
+      );
+      return { prev };
+    },
+    onError: (err, _userId, ctx) => {
+      if (orgId && ctx?.prev) {
+        queryClient.setQueryData(queryKeys.members(orgId), ctx.prev);
+      }
+      alert(err instanceof ApiError ? err.detail : "Failed to remove.");
+    },
+    onSettled: invalidateTeam,
   });
 
   const roleMutation = useMutation({
@@ -120,9 +155,25 @@ const Team = () => {
         method: "PUT",
         body: { role },
       }),
-    onSuccess: invalidateTeam,
-    onError: (err) =>
-      alert(err instanceof ApiError ? err.detail : "Failed to update role."),
+    onMutate: async ({ userId, role }) => {
+      if (!orgId) return { prev: undefined };
+      const key = queryKeys.members(orgId);
+      await queryClient.cancelQueries({ queryKey: key });
+      const prev = queryClient.getQueryData<Member[]>(key);
+      queryClient.setQueryData<Member[]>(key, (cur) =>
+        (cur ?? []).map((m) =>
+          m.user_id === userId ? { ...m, role } : m
+        )
+      );
+      return { prev };
+    },
+    onError: (err, _vars, ctx) => {
+      if (orgId && ctx?.prev) {
+        queryClient.setQueryData(queryKeys.members(orgId), ctx.prev);
+      }
+      alert(err instanceof ApiError ? err.detail : "Failed to update role.");
+    },
+    onSettled: invalidateTeam,
   });
 
   const handleInvite = (e: React.FormEvent) => {

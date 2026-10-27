@@ -20,15 +20,15 @@ const AuthLayout = ({
     {/* Left panel */}
     <div className="w-[440px] flex-shrink-0 bg-bg2 border-r border-l1 flex flex-col px-10 py-12 overflow-y-auto">
       <div className="flex items-center gap-2.5 mb-12">
-        <div className="w-8 h-8 bg-white text-bg rounded-md flex items-center justify-center">
+        <div className="w-8 h-8 bg-accent text-ink rounded-md flex items-center justify-center">
           <Logo size={16} />
         </div>
-        <span className="text-[16px] font-semibold tracking-tight text-white">
-          DocPilot
+        <span className="font-serif text-[22px] tracking-tight text-t1 leading-none">
+          Docpilot
         </span>
       </div>
 
-      <h1 className="text-[24px] font-semibold tracking-tight text-white mb-2">
+      <h1 className="font-serif font-normal text-[38px] tracking-tight text-t1 leading-[1.05] mb-3">
         {title}
       </h1>
       {subtitle && (
@@ -58,7 +58,7 @@ const AuthLayout = ({
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
         style={{
           background:
-            "radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)",
+            "radial-gradient(circle, rgba(168,86,43,0.06) 0%, transparent 70%)",
         }}
       />
       <div className="relative z-10 w-[380px]">

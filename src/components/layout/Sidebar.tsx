@@ -22,7 +22,7 @@ const linkClasses = ({ isActive }: { isActive: boolean }) =>
     "flex items-center gap-2 px-2 py-1.5 rounded-sm text-[12px] leading-tight",
     "transition-colors mb-[1px]",
     isActive
-      ? "bg-s2 text-white font-medium"
+      ? "bg-s2 text-accent font-medium"
       : "text-t4 hover:bg-s1 hover:text-t2",
   ].join(" ");
 
@@ -101,11 +101,11 @@ const Sidebar = () => {
     <aside className="w-[220px] flex-shrink-0 bg-bg2 border-r border-l1 flex flex-col overflow-hidden">
       {/* Logo */}
       <div className="h-[52px] px-3.5 border-b border-l1 flex items-center gap-2.5 flex-shrink-0">
-        <div className="w-6 h-6 bg-white text-bg rounded-sm flex items-center justify-center">
+        <div className="w-6 h-6 bg-accent text-ink rounded-sm flex items-center justify-center">
           <Logo size={14} />
         </div>
-        <span className="font-semibold text-[13px] tracking-tight text-white">
-          DocPilot
+        <span className="font-serif text-[19px] tracking-tight text-t1 leading-none">
+          Docpilot
         </span>
       </div>
 
@@ -146,7 +146,7 @@ const Sidebar = () => {
                   </div>
                 </div>
                 {o.id === activeOrg?.id && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0" />
                 )}
               </button>
             ))}
@@ -172,7 +172,7 @@ const Sidebar = () => {
             <FileText size={13} /> All Documents
           </NavLink>
           {canUpload && (
-            <NavLink to="/upload" className={linkClasses}>
+            <NavLink to="/process" className={linkClasses}>
               <Sparkles size={13} /> Generate
             </NavLink>
           )}

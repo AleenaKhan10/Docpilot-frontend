@@ -5,21 +5,23 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import MainLayout from "../../components/layout/MainLayout";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
-import Pill from "../../components/ui/Pill";
 import { useOrg } from "../../contexts/OrgContext";
 import { ApiError, uploadFile } from "../../lib/api";
 import { queryKeys } from "../../lib/query-client";
 import type { DocOutputType } from "../../lib/doc-types";
 import type { BackendVideoSummary } from "../../lib/video-types";
 
-const OUTPUT_TYPES: { value: DocOutputType; label: string; desc: string; featured?: boolean }[] = [
-  { value: "sop", label: "SOP", desc: "Sectioned, hierarchical procedure with decision points and callouts.", featured: true },
+const OUTPUT_TYPES: { value: DocOutputType; label: string; desc: string }[] = [
+  { value: "sop", label: "SOP", desc: "Sectioned, hierarchical procedure with decision points and callouts." },
+  { value: "meeting_notes", label: "Meeting Notes", desc: "Design review / planning session: topics discussed, decisions, action items with owners, open questions, reference screenshots." },
   { value: "bug_report", label: "Bug Report", desc: "Repro steps + expected vs. actual + environment, captured automatically." },
-  { value: "training", label: "Training Module", desc: "Lesson sequence with embedded comprehension checks." },
+  { value: "training", label: "Training", desc: "Lesson sequence with embedded comprehension checks." },
   { value: "changelog", label: "Changelog", desc: "Versioned list of new / fixed / improved / breaking changes." },
   { value: "audit", label: "Audit Trail", desc: "Timestamped actor → action log, categorized." },
   { value: "client_handover", label: "Client Handover", desc: "Deliverables checklist and project closeout summary." },
 ];
+
+const OUTPUT_TYPE_VALUES: DocOutputType[] = OUTPUT_TYPES.map((t) => t.value);
 
 const fmtBytes = (b: number) => {
   const mb = b / 1_000_000;
@@ -48,12 +50,9 @@ const UploadVideo = () => {
   // Allow ?type=sop|training|bug_report|... to pre-select an output type
   // (used by dashboard quick-action cards).
   useEffect(() => {
-    const t = searchParams.get("type");
-    if (
-      t &&
-      ["sop", "training", "bug_report", "changelog", "audit", "client_handover"].includes(t)
-    ) {
-      setOutputType(t as DocOutputType);
+    const t = searchParams.get("type") as DocOutputType | null;
+    if (t && OUTPUT_TYPE_VALUES.includes(t)) {
+      setOutputType(t);
     }
   }, [searchParams]);
   const [title, setTitle] = useState("");
@@ -150,48 +149,48 @@ const UploadVideo = () => {
     <MainLayout breadcrumbs={[{ label: activeOrg?.name ?? "Workspace" }, { label: "Generate" }]}>
       <div className="px-6 py-6 max-w-[1100px] mx-auto">
         <div className="mb-6">
-          <h1 className="text-[20px] font-semibold tracking-tight text-white">Generate document</h1>
-          <p className="text-[12px] text-t4 mt-0.5">
-            Pick an output type, upload a screen recording, and DocPilot will produce a structured document — not just a step list.
+          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent mb-3">
+            New document · From video
+          </div>
+          <h1 className="font-serif font-normal text-[42px] tracking-tight text-t1 leading-[1.02] mb-3">Generate document</h1>
+          <p className="font-serif italic text-[17px] text-t3 leading-relaxed max-w-[52ch]">
+            Pick an output type, upload a screen recording, and Docpilot will produce a structured document — not just a step list.
           </p>
         </div>
 
-        {/* Output type picker */}
+        {/* Output type tags */}
         <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-t5 mb-2.5">
-          1 — Choose output type
+          1 — Tag this document
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-6">
-          {OUTPUT_TYPES.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => setOutputType(t.value)}
-              disabled={isBusy}
-              className={[
-                "bg-s1 border rounded-md p-4 text-left transition relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed",
-                outputType === t.value
-                  ? "border-white bg-s3"
-                  : t.featured
-                  ? "border-l3 hover:bg-s2 hover:border-l3"
-                  : "border-l1 hover:bg-s2 hover:border-l3",
-              ].join(" ")}
-            >
-              {(outputType === t.value || t.featured) && (
-                <div
-                  className={[
-                    "absolute top-0 left-0 right-0 h-px",
-                    outputType === t.value ? "bg-white" : "bg-t2",
-                  ].join(" ")}
-                />
-              )}
-              <div className="text-[12px] font-semibold text-t1 mb-1.5">{t.label}</div>
-              <div className="text-[11px] text-t4 leading-[1.55]">{t.desc}</div>
-              {outputType === t.value && (
-                <div className="mt-2.5">
-                  <Pill variant="info">Selected</Pill>
-                </div>
-              )}
-            </button>
-          ))}
+        <div
+          role="radiogroup"
+          aria-label="Output type"
+          className="flex flex-wrap gap-1.5 mb-2"
+        >
+          {OUTPUT_TYPES.map((t) => {
+            const selected = outputType === t.value;
+            return (
+              <button
+                key={t.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setOutputType(t.value)}
+                disabled={isBusy}
+                className={[
+                  "font-mono text-[10px] tracking-wide px-2.5 py-1 rounded-xs border transition disabled:opacity-50 disabled:cursor-not-allowed",
+                  selected
+                    ? "bg-accent text-ink border-accent"
+                    : "bg-s2 text-t3 border-l1 hover:bg-s3 hover:text-t1 hover:border-l2",
+                ].join(" ")}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="text-[11px] text-t4 leading-[1.55] mb-6 min-h-[2.6em]">
+          {OUTPUT_TYPES.find((t) => t.value === outputType)?.desc}
         </div>
 
         {/* Upload zone */}

@@ -9,7 +9,24 @@ export type DocOutputType =
   | "bug_report"
   | "changelog"
   | "audit"
-  | "client_handover";
+  | "client_handover"
+  | "meeting_notes"
+  | "product_overview"
+  | "dev_reference"
+  | "user_guide";
+
+export const DOC_OUTPUT_LABEL: Record<DocOutputType, string> = {
+  sop: "SOP",
+  training: "Training",
+  bug_report: "Bug Report",
+  changelog: "Changelog",
+  audit: "Audit Trail",
+  client_handover: "Client Handover",
+  meeting_notes: "Meeting Notes",
+  product_overview: "Product Overview",
+  dev_reference: "Developer Reference",
+  user_guide: "User Guide",
+};
 
 export interface DocumentMeta {
   id: string;
@@ -31,6 +48,7 @@ export type Block =
   | CalloutBlock
   | CodeBlock
   | ImageBlock
+  | ImageGridBlock
   | DecisionBlock
   | ListBlock
   | TableBlock
@@ -78,6 +96,25 @@ export interface ImageBlock extends BlockBase {
   frame_id?: string;
   /** When the image lives in Supabase Storage (uploaded via editor). */
   storage_key?: string;
+}
+
+export interface ImageGridItem {
+  /** Resolved signed URL (set by the backend before send). */
+  url?: string;
+  caption?: string;
+  alt?: string;
+  /** Backend-side identifiers — the API resolves these into `url`. */
+  frame_id?: string;
+  storage_key?: string;
+}
+
+export interface ImageGridBlock extends BlockBase {
+  type: "image_grid";
+  /** Optional intro paragraph above the grid. */
+  intro?: string;
+  /** 2–4 is a sweet spot visually; the renderer clamps automatically. */
+  columns?: number;
+  items: ImageGridItem[];
 }
 
 export interface DecisionBlock extends BlockBase {

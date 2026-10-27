@@ -6,9 +6,9 @@ import type { VideoProgressEvent } from "../../lib/use-video-progress";
  * marks earlier ones as done once a later one fires.
  */
 const STAGES: { key: string; label: string }[] = [
-  { key: "splitting", label: "Extracting audio + frames" },
+  { key: "splitting", label: "Extracting audio" },
   { key: "transcribing", label: "Transcribing audio" },
-  { key: "generating", label: "Writing structured document" },
+  { key: "generating", label: "Analysing video + writing document" },
   { key: "saving", label: "Saving to database" },
   { key: "generating_pdf", label: "Rendering PDF" },
 ];

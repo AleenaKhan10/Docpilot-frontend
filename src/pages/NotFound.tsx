@@ -5,17 +5,17 @@ import Logo from "../components/layout/Logo";
 const NotFound = () => (
   <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6">
     <div className="flex items-center gap-2.5 mb-8">
-      <div className="w-7 h-7 bg-white text-bg rounded-md flex items-center justify-center">
+      <div className="w-7 h-7 bg-accent text-ink rounded-md flex items-center justify-center">
         <Logo size={14} />
       </div>
-      <span className="text-[14px] font-semibold tracking-tight text-white">
-        DocPilot
+      <span className="font-serif text-[20px] tracking-tight text-t1 leading-none">
+        Docpilot
       </span>
     </div>
-    <div className="font-mono text-[10px] tracking-[0.15em] uppercase text-t5 mb-3">
+    <div className="font-mono text-[10px] tracking-[0.15em] uppercase text-accent mb-3">
       404 · Not Found
     </div>
-    <h1 className="text-[20px] font-semibold tracking-tight text-white mb-1.5">
+    <h1 className="font-serif font-normal text-[36px] tracking-tight text-t1 mb-2 leading-[1.05]">
       Page not found
     </h1>
     <p className="text-[13px] text-t4 mb-8">

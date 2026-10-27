@@ -181,7 +181,7 @@ const RichTextEditor = ({
           />
           <button
             onClick={commitLink}
-            className="text-[11px] font-medium bg-white text-ink rounded-sm px-2.5 py-1.5 hover:opacity-90"
+            className="text-[11px] font-medium bg-accent text-ink rounded-sm px-2.5 py-1.5 hover:bg-accent-hover"
           >
             Apply
           </button>

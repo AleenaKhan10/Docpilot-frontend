@@ -1,6 +1,7 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Github } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import MainLayout from "../../components/layout/MainLayout";
 import Pill from "../../components/ui/Pill";
 import TableSkeleton from "../../components/ui/TableSkeleton";
@@ -10,9 +11,21 @@ import StatTile from "../../components/dashboard/StatTile";
 import ActivityFeed from "../../components/dashboard/ActivityFeed";
 import QuickActions from "../../components/dashboard/QuickActions";
 import { useOrg } from "../../contexts/OrgContext";
-import { ApiError } from "../../lib/api";
+import { api, ApiError } from "../../lib/api";
 import { useVideos, usePrefetchVideo } from "../../hooks/useVideos";
 import type { BackendVideoSummary, VideoStatus } from "../../lib/video-types";
+import { DOC_OUTPUT_LABEL, type DocOutputType } from "../../lib/doc-types";
+
+type RepoDocRow = {
+  id: string;
+  source_id: string;
+  source_label: string;
+  output_type: string;
+  title: string | null;
+  created_at: string;
+  updated_at: string | null;
+  view_path: string;
+};
 
 // Minutes a human technical writer would have spent producing this doc,
 // per published video. Conservative — most SOP-style docs take longer.
@@ -155,7 +168,63 @@ const Dashboard = () => {
       .sort((a, b) => b.value - a.value);
   }, [completedVideos]);
 
-  const recent = videos.slice(0, 5);
+  const { data: repoDocs = [] } = useQuery<RepoDocRow[]>({
+    queryKey: ["documents", "repo", activeOrg?.id],
+    queryFn: () => api<RepoDocRow[]>("/api/v1/documents/?source_type=repo"),
+    enabled: !!activeOrg,
+  });
+
+  type UnifiedRecent =
+    | {
+        kind: "video";
+        key: string;
+        videoId: number;
+        title: string;
+        outputType: string;
+        status: VideoStatus;
+        createdAt: string;
+        updatedAt: string | null;
+      }
+    | {
+        kind: "repo";
+        key: string;
+        viewPath: string;
+        title: string;
+        outputType: string;
+        sourceLabel: string;
+        createdAt: string;
+        updatedAt: string | null;
+      };
+
+  const recent: UnifiedRecent[] = useMemo(() => {
+    const vids: UnifiedRecent[] = videos.map((v) => ({
+      kind: "video",
+      key: `v-${v.id}`,
+      videoId: v.id,
+      title: v.title,
+      outputType: v.output_type || "sop",
+      status: v.status,
+      createdAt: v.created_at,
+      updatedAt: v.updated_at ?? null,
+    }));
+    const docs: UnifiedRecent[] = repoDocs.map((d) => ({
+      kind: "repo",
+      key: `d-${d.id}`,
+      viewPath: d.view_path,
+      title: d.title ?? "Untitled",
+      outputType: d.output_type,
+      sourceLabel: d.source_label,
+      createdAt: d.created_at,
+      updatedAt: d.updated_at,
+    }));
+    return [...vids, ...docs]
+      .sort((a, b) => {
+        const ta = new Date(a.updatedAt ?? a.createdAt).getTime();
+        const tb = new Date(b.updatedAt ?? b.createdAt).getTime();
+        return tb - ta;
+      })
+      .slice(0, 5);
+  }, [videos, repoDocs]);
 
   return (
     <MainLayout breadcrumbs={[{ label: activeOrg?.name ?? "Workspace" }, { label: "Dashboard" }]}>
@@ -292,7 +361,7 @@ const Dashboard = () => {
               <table className="w-full text-[12px]">
                 <thead>
                   <tr className="bg-s2">
-                    {["Name", "Type", "Status", "Created", "Created by", "Updated"].map((h) => (
+                    {["Name", "Source", "Type", "Status", "Updated"].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-2 text-left font-mono text-[9px] uppercase tracking-wide text-t5 border-b border-l1"
@@ -303,40 +372,56 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {recent.map((v) => (
-                    <tr
-                      key={v.id}
-                      className="border-b border-l1 last:border-0 hover:bg-s2 cursor-pointer"
-                      onMouseEnter={() => prefetchVideo(v.id)}
-                      onClick={() => navigate(`/documents/${v.id}`)}
-                    >
-                      <td className="px-4 py-2.5 text-t2 font-medium">{v.title}</td>
-                      <td className="px-4 py-2.5 text-t4">
-                        {OUTPUT_TYPE_LABEL[v.output_type || "sop"] ?? v.output_type}
-                      </td>
-                      <td className="px-4 py-2.5">{statusPill(v.status)}</td>
-                      <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
-                        {fmtRelative(v.created_at)}
-                      </td>
-                      <td className="px-4 py-2.5 text-t3">
-                        {v.created_by ? (
-                          <>
-                            {v.created_by}
-                            {v.created_by_is_former && (
-                              <span className="ml-1.5 font-mono text-[9px] uppercase tracking-wide text-t5">
-                                former
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-t5">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
-                        {v.updated_at ? fmtRelative(v.updated_at) : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {recent.map((r) =>
+                    r.kind === "video" ? (
+                      <tr
+                        key={r.key}
+                        className="border-b border-l1 last:border-0 hover:bg-s2 cursor-pointer"
+                        onMouseEnter={() => prefetchVideo(r.videoId)}
+                        onClick={() => navigate(`/documents/${r.videoId}`)}
+                      >
+                        <td className="px-4 py-2.5 text-t2 font-medium">{r.title}</td>
+                        <td className="px-4 py-2.5">
+                          <Pill variant="neutral">Video</Pill>
+                        </td>
+                        <td className="px-4 py-2.5 text-t4">
+                          {OUTPUT_TYPE_LABEL[r.outputType] ?? r.outputType}
+                        </td>
+                        <td className="px-4 py-2.5">{statusPill(r.status)}</td>
+                        <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
+                          {r.updatedAt ? fmtRelative(r.updatedAt) : fmtRelative(r.createdAt)}
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr
+                        key={r.key}
+                        className="border-b border-l1 last:border-0 hover:bg-s2 cursor-pointer"
+                        onClick={() => navigate(r.viewPath)}
+                      >
+                        <td className="px-4 py-2.5 text-t2 font-medium">{r.title}</td>
+                        <td className="px-4 py-2.5">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Pill variant="neutral">
+                              <Github size={9} className="inline mr-1" />
+                              GitHub
+                            </Pill>
+                            <span className="font-mono text-[10px] text-t5 truncate max-w-[160px]">
+                              {r.sourceLabel}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-t4">
+                          {DOC_OUTPUT_LABEL[r.outputType as DocOutputType] ?? r.outputType}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Pill variant="ok">Generated</Pill>
+                        </td>
+                        <td className="px-4 py-2.5 font-mono text-[11px] text-t5">
+                          {r.updatedAt ? fmtRelative(r.updatedAt) : fmtRelative(r.createdAt)}
+                        </td>
+                      </tr>
+                    )
+                  )}
                 </tbody>
               </table>
             )}

@@ -212,10 +212,10 @@ const Team = () => {
       <div className="px-6 py-6 max-w-[1100px]">
         <div className="flex items-end justify-between mb-5">
           <div>
-            <h1 className="text-[20px] font-semibold tracking-tight text-white">
+            <h1 className="font-serif font-normal text-[38px] tracking-tight text-t1 leading-[1.05] mb-2">
               Team
             </h1>
-            <p className="text-[12px] text-t4 mt-0.5">
+            <p className="font-serif italic text-[16px] text-t3 leading-relaxed">
               Manage who can access this organization and what they can do.
             </p>
           </div>

@@ -87,6 +87,49 @@ const BlockRenderer = ({ block }: { block: Block }) => {
         </figure>
       );
 
+    case "image_grid": {
+      const items = block.items ?? [];
+      // Clamp columns to a sensible range + pick a reasonable default
+      // based on item count: 2 cols for 2, 3 for 3-6, otherwise 4.
+      const requested = block.columns ?? (items.length <= 2 ? 2 : items.length <= 6 ? 3 : 4);
+      const cols = Math.max(1, Math.min(4, requested));
+      const gridClass =
+        cols === 1 ? "grid-cols-1" : cols === 2 ? "grid-cols-1 md:grid-cols-2"
+        : cols === 3 ? "grid-cols-1 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4";
+      return (
+        <div>
+          {block.intro && (
+            <p className="text-[13px] text-t3 leading-[1.75] mb-3">{block.intro}</p>
+          )}
+          <div className={`grid ${gridClass} gap-2`}>
+            {items.map((it, i) => (
+              <figure
+                key={i}
+                className="rounded-md border border-l1 overflow-hidden bg-s1 flex flex-col"
+              >
+                {it.url ? (
+                  <img
+                    src={it.url}
+                    alt={it.alt ?? it.caption ?? ""}
+                    className="block w-full h-auto object-cover"
+                  />
+                ) : (
+                  <div className="w-full aspect-video bg-s2 flex items-center justify-center font-mono text-[9px] text-t5">
+                    (image unavailable)
+                  </div>
+                )}
+                {it.caption && (
+                  <figcaption className="px-2 py-1.5 text-[10px] text-t4 border-t border-l1">
+                    {it.caption}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     case "decision":
       return (
         <div className="rounded-md border border-l1 bg-s1 p-4">

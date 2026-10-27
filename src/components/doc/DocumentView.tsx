@@ -80,7 +80,7 @@ const DocumentView = ({
               className={[
                 "text-[12px] py-1.5 px-2 rounded-sm border-l-2 transition",
                 activeSection === s.id
-                  ? "text-t1 border-white bg-s1"
+                  ? "text-accent border-accent bg-s1"
                   : "text-t4 border-transparent hover:text-t2 hover:bg-s1",
               ].join(" ")}
             >
@@ -125,10 +125,13 @@ const DocumentView = ({
             </div>
           </div>
 
-          <h1 className="text-[22px] font-semibold tracking-tight text-white leading-tight mb-2">
+          <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent mb-3">
+            {fmtDate(document.updated_at)} · {OUTPUT_LABEL[document.output_type]}
+          </div>
+          <h1 className="font-serif font-normal text-[40px] tracking-tight text-t1 leading-[1.05] mb-3 max-w-[16ch]">
             {document.title}
           </h1>
-          <p className="text-[13px] text-t3 leading-relaxed">
+          <p className="font-serif italic text-[17px] text-t3 leading-relaxed max-w-[46ch]">
             {document.summary}
           </p>
 
@@ -152,11 +155,11 @@ const DocumentView = ({
               id={section.id}
               className="bg-s1 border border-l1 rounded-md px-6 py-6 scroll-mt-6"
             >
-              <h2 className="text-[16px] font-semibold tracking-tight text-white mb-1.5">
+              <h2 className="font-serif font-normal text-[24px] tracking-tight text-t1 mb-2 leading-tight">
                 {section.heading}
               </h2>
               {section.intro && (
-                <p className="text-[12px] text-t4 mb-5 leading-relaxed">
+                <p className="text-[13px] text-t4 mb-5 leading-relaxed">
                   {section.intro}
                 </p>
               )}

@@ -86,11 +86,11 @@ const SharePage = () => {
     <div className="min-h-screen bg-bg flex flex-col">
       <header className="bg-bg2 border-b border-l1 px-6 h-[52px] flex items-center">
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 bg-white text-bg rounded-sm flex items-center justify-center">
+          <div className="w-6 h-6 bg-accent text-ink rounded-sm flex items-center justify-center">
             <Logo size={14} />
           </div>
-          <span className="text-[13px] font-semibold tracking-tight text-white">
-            DocPilot
+          <span className="font-serif text-[19px] tracking-tight text-t1 leading-none">
+            Docpilot
           </span>
           <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-t5 ml-2 border border-l2 rounded-xs px-1.5 py-[2px]">
             Shared document · read-only

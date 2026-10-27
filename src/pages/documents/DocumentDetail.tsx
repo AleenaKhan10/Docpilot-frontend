@@ -195,7 +195,7 @@ const DocumentDetail = () => {
               </div>
             </div>
             <p className="text-[12px] text-t4 leading-relaxed mb-5">
-              DocPilot is analysing the recording and writing the document.
+              Docpilot is analysing the recording and writing the document.
               You can leave this tab open — it'll update on its own.
             </p>
             <ProcessingTimeline
@@ -271,11 +271,36 @@ const DocumentDetail = () => {
         mode={mode}
         onEdit={canEdit ? () => setMode("edit") : undefined}
         onShare={video ? () => setShareOpen(true) : undefined}
-        onExport={() => {
-          if (video?.pdf_url) {
-            window.open(video.pdf_url, "_blank");
-          } else {
+        onExport={async () => {
+          if (!video?.pdf_url) {
             alert("PDF not ready yet.");
+            return;
+          }
+          // Fetch the signed URL as a blob and trigger a real download,
+          // instead of window.open() which browsers often show inline (so
+          // the user thinks nothing happened) or block as a popup.
+          try {
+            const resp = await fetch(video.pdf_url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const safeTitle = (video.title || `document-${video.id}`)
+              .replace(/[^\w\s.-]/g, "")
+              .trim()
+              .replace(/\s+/g, "-")
+              .slice(0, 80) || `document-${video.id}`;
+            a.download = `${safeTitle}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            // Release the blob after the browser has started the download.
+            setTimeout(() => URL.revokeObjectURL(url), 1_000);
+          } catch (e) {
+            console.error("PDF download failed:", e);
+            // Fallback — give the user the raw URL to open manually.
+            window.open(video.pdf_url, "_blank", "noopener");
           }
         }}
       />

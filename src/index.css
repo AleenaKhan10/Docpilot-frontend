@@ -1,60 +1,78 @@
 @import "tailwindcss";
 
 /* ────────────────────────────────────────────────────────────────
-   DESIGN TOKENS — Obsidian Dark (matches docpilot-obsidian.html)
+   DESIGN TOKENS — Warm Editorial (Direction A rebrand)
+   Palette: warm off-white page, cream surfaces, sand dividers,
+   dark umber text hierarchy, single terracotta accent.
    Hierarchy: bg → s1..s4 (surfaces) → l1..l4 (lines) → t5..t1 (text)
    ──────────────────────────────────────────────────────────────── */
 @theme {
-  --color-bg:        #09090B;
-  --color-bg2:       #0C0C0E;
-  --color-s1:        #111113;
-  --color-s2:        #161618;
-  --color-s3:        #1C1C1F;
-  --color-s4:        #222226;
+  --color-bg:        #F6F1EA;
+  --color-bg2:       #EFE7DC;
 
-  --color-l1:        #1E1E22;
-  --color-l2:        #28282D;
-  --color-l3:        #34343A;
-  --color-l4:        #48484F;
+  --color-s1:        #F0EADD;
+  --color-s2:        #EDE5D5;
+  --color-s3:        #E9DFC9;
+  --color-s4:        #E4D9C1;
 
-  --color-t5:        #52525C;
-  --color-t4:        #71717A;
-  --color-t3:        #A1A1AA;
-  --color-t2:        #D4D4D8;
-  --color-t1:        #F4F4F5;
-  --color-white:     #FAFAFA;
+  --color-l1:        #E0D4C3;
+  --color-l2:        #D5C6B1;
+  --color-l3:        #C4B39C;
+  --color-l4:        #A99A83;
 
-  /* Ink — explicit dark color for use as text-on-light (buttons, etc.).
-     Aliased to bg, but with an unambiguous name so `text-ink` reads correctly. */
-  --color-ink:       #09090B;
+  --color-t5:        #A69684;
+  --color-t4:        #7A6B5C;
+  --color-t3:        #5C4F42;
+  --color-t2:        #3D3229;
+  --color-t1:        #2A211A;
 
-  /* Semantic status colors */
-  --color-ok-bg:     #0A1F0A;
-  --color-ok-fg:     #6EE57E;
-  --color-ok-line:   #163016;
+  /* `text-white` / `bg-white` fold onto the primary text color
+     so components that used them on a dark scheme still read
+     correctly against the warm page. */
+  --color-white:     #2A211A;
+  --color-black:     #2A211A;
 
-  --color-warn-bg:   #1F180A;
-  --color-warn-fg:   #FBB040;
-  --color-warn-line: #302010;
+  /* Ink — the on-light counterpart. On the dark scheme this was
+     dark; on the light scheme it is the page cream so that text
+     placed on the accent still reads. */
+  --color-ink:       #F6F1EA;
 
-  --color-err-bg:    #1F0A0A;
-  --color-err-fg:    #F87171;
-  --color-err-line:  #301616;
+  /* Single warm accent — Direction A's one job:
+     currently-open doc, primary action, active nav. */
+  --color-accent:        #A8562B;
+  --color-accent-hover:  #8F471F;
+  --color-accent-soft:   #F0E1D2;
 
-  --color-info-bg:   #0A1820;
-  --color-info-fg:   #67C6F7;
-  --color-info-line: #102030;
+  /* Semantic status colors, tuned for a light warm background. */
+  --color-ok-bg:     #E9EFDF;
+  --color-ok-fg:     #4B6B3B;
+  --color-ok-line:   #D0DCB8;
 
-  --color-purple-bg: #1A0A20;
-  --color-purple-fg: #C084FC;
-  --color-purple-line: #2A1030;
+  --color-warn-bg:   #F5E6D3;
+  --color-warn-fg:   #9B6425;
+  --color-warn-line: #E5CFA7;
 
-  --color-yellow-bg: #1C1A08;
-  --color-yellow-fg: #EAE060;
-  --color-yellow-line: #2E2A10;
+  --color-err-bg:    #F5DED4;
+  --color-err-fg:    #8F3A20;
+  --color-err-line:  #E5C0AC;
 
-  --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
+  /* Info folds onto the accent — links and the "info" pill
+     both read as terracotta on the warm ground. */
+  --color-info-bg:   #F0E1D2;
+  --color-info-fg:   #A8562B;
+  --color-info-line: #E0D4C3;
+
+  --color-purple-bg:   #EDE4E9;
+  --color-purple-fg:   #6B4A5F;
+  --color-purple-line: #DBCCD3;
+
+  --color-yellow-bg:   #F5EFD5;
+  --color-yellow-fg:   #8B7325;
+  --color-yellow-line: #E5D8A7;
+
+  --font-sans:  "Inter Tight", system-ui, sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-mono:  "JetBrains Mono", ui-monospace, monospace;
 
   --radius-xs: 2px;
   --radius-sm: 4px;
@@ -62,8 +80,6 @@
   --radius-lg: 8px;
 }
 
-/* Wrap our custom rules in @layer base so Tailwind utilities can
-   override them. Without this, unlayered rules WIN against utilities. */
 @layer base {
   html, body, #root {
     height: 100%;
@@ -73,18 +89,20 @@
     font-size: 13px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--color-l3); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-l4); }
+  ::-webkit-scrollbar-thumb { background: var(--color-l2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-l3); }
 
-  ::selection { background: var(--color-l3); color: var(--color-white); }
+  ::selection { background: var(--color-accent-soft); color: var(--color-accent); }
 
   a { color: inherit; text-decoration: none; }
 
-  /* TipTap editor content styles — keep the editor on-theme. */
+  /* TipTap editor content styles — kept on-theme via the token
+     remap, plus one signature: article headings pick up the serif. */
   .tiptap-content p {
     margin: 0 0 0.6em;
   }
@@ -93,22 +111,26 @@
   .tiptap-content em { font-style: italic; }
   .tiptap-content u { text-decoration: underline; }
   .tiptap-content a {
-    color: var(--color-info-fg);
+    color: var(--color-accent);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
   .tiptap-content h2 {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--color-white);
-    letter-spacing: -0.02em;
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--color-t1);
+    letter-spacing: -0.01em;
     margin: 0.5em 0 0.4em;
   }
   .tiptap-content h3 {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-t1);
-    margin: 0.5em 0 0.3em;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-t4);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0.7em 0 0.3em;
   }
   .tiptap-content ul, .tiptap-content ol {
     padding-left: 1.2em;
@@ -125,7 +147,7 @@
   .tiptap-content code {
     font-family: var(--font-mono);
     background: var(--color-s3);
-    border: 1px solid var(--color-l2);
+    border: 1px solid var(--color-l1);
     border-radius: 2px;
     padding: 1px 4px;
     font-size: 0.9em;
@@ -138,8 +160,7 @@
     pointer-events: none;
   }
 
-  /* Modal backdrop fade-in + content pop. Used by ShareDialog and any
-     other top-level modal that wants a softer entrance than instant. */
+  /* Modal backdrop fade-in + content pop. */
   @keyframes dp-modal-fade-kf {
     from { opacity: 0; }
     to   { opacity: 1; }

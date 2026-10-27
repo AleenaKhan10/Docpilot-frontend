@@ -225,7 +225,7 @@ const ShareDialog = ({
             <>
               <p className="text-[12px] text-t4 leading-relaxed">
                 Anyone with the link can view this document (read-only).
-                No DocPilot account needed.
+                No Docpilot account needed.
               </p>
               {canManageSharing && (
                 <>

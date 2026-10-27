@@ -23,8 +23,8 @@ const Settings = () => {
     <MainLayout breadcrumbs={[{ label: activeOrg?.name ?? "Workspace" }, { label: "Settings" }]}>
       <div className="px-6 py-6 max-w-[1100px]">
         <div className="mb-5">
-          <h1 className="text-[20px] font-semibold tracking-tight text-white">Settings</h1>
-          <p className="text-[12px] text-t4 mt-0.5">
+          <h1 className="font-serif font-normal text-[38px] tracking-tight text-t1 leading-[1.05] mb-2">Settings</h1>
+          <p className="font-serif italic text-[16px] text-t3 leading-relaxed">
             Organization-level configuration. Changes affect everyone in {activeOrg?.name ?? "this workspace"}.
           </p>
         </div>

@@ -174,7 +174,7 @@ const AcceptInvite = () => {
       {!loading && peek && peek.existing_user && !needsSignup && (
         <div className="flex flex-col gap-4">
           <p className="text-[13px] text-t3 leading-relaxed">
-            This email already has a DocPilot account.{" "}
+            This email already has a Docpilot account.{" "}
             {session
               ? "Click below to add this organization to your account."
               : "Sign in first, then return here to accept."}

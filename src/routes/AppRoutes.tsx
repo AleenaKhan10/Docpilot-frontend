@@ -13,7 +13,12 @@ const AcceptInvite = lazy(() => import("../pages/auth/AcceptInvite"));
 const SharePage = lazy(() => import("../pages/share/SharePage"));
 const NotFound = lazy(() => import("../pages/NotFound"));
 const Dashbaord = lazy(() => import("../pages/dashboard/Dashbaord"));
+const ProcessPicker = lazy(() => import("../pages/process/ProcessPicker"));
 const UploadVideo = lazy(() => import("../pages/process/UploadVideo"));
+const ConnectedRepos = lazy(() => import("../pages/process/ConnectedRepos"));
+const RepoSelect = lazy(() => import("../pages/process/RepoSelect"));
+const RepoGenerate = lazy(() => import("../pages/process/RepoGenerate"));
+const RepoDocumentDetail = lazy(() => import("../pages/documents/RepoDocumentDetail"));
 const AllDocuments = lazy(() => import("../pages/documents/AllDocuments"));
 const DocumentDetail = lazy(() => import("../pages/documents/DocumentDetail"));
 const CreateOrg = lazy(() => import("../pages/org/CreateOrg"));
@@ -43,8 +48,13 @@ const AppRoutes = () => {
           {/* Authed + member of an org */}
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Dashbaord />} />
-            <Route path="/upload" element={<UploadVideo />} />
+            <Route path="/process" element={<ProcessPicker />} />
+            <Route path="/process/video" element={<UploadVideo />} />
+            <Route path="/process/repo" element={<ConnectedRepos />} />
+            <Route path="/process/repo/select" element={<RepoSelect />} />
+            <Route path="/process/repo/:sourceId" element={<RepoGenerate />} />
             <Route path="/documents" element={<AllDocuments />} />
+            <Route path="/documents/repo/:id" element={<RepoDocumentDetail />} />
             <Route path="/documents/:id" element={<DocumentDetail />} />
             <Route path="/team" element={<Team />} />
             <Route path="/settings" element={<Settings />} />

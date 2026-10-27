@@ -85,7 +85,7 @@ const SignupOrg = () => {
   return (
     <AuthLayout
       title="Start your organization"
-      subtitle="Create the account that will own your DocPilot workspace. You can invite team members after."
+      subtitle="Create the account that will own your Docpilot workspace. You can invite team members after."
       footer={
         <>
           Got an invitation link? Open it directly — no need to sign up here.

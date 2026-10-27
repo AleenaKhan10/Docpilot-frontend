@@ -15,7 +15,7 @@ const QuickActions = ({ role }: QuickActionsProps) => {
 
   const actions = [
     {
-      to: "/upload",
+      to: "/process",
       icon: <Sparkles size={14} />,
       title: "New document",
       desc: "Upload a screen recording → structured doc.",
